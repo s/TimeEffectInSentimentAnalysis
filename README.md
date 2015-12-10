@@ -60,9 +60,9 @@ In our setup, tweet class can either be 'positive', 'negative' or 'neutral'. Onc
 - After splitting dataset to years, all the tweets are shuffled because of having limited amount of tweet data.
 - Then, chunks of tweet data is created for experimental purposes as it's given in the below table.
 	- 2012: [500]
-	- 2013: [500, 300, 200, 50]		
-	- 2014: [500, 300, 200, 50]
-	- 2015: [500, 300, 200, 50] 
+	- 2013: [500, 300, 200, [50]x10 times]		
+	- 2014: [500, 300, 200, [50]x10 times]
+	- 2015: [500, 300, 200, [50]x10 times] 
 
 	This chunks remain same for an experiment. Which means this chunks created once at the beginning of the experiment and stayed same to the end of the project.
 	
