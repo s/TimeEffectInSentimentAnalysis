@@ -38,7 +38,7 @@ Each module does some work and as a result of all modules working together, we a
 `Main.py` class is created to have a level of abstraction between `app.py` and the modules. Example codes to the main functions of modules can be found in `app.py`.
 
 ##Usage
-**1) Import Manager: ** To import new tweet data to system, simply create a text file containing information like as follows:
+**1) Import Manager:** To import new tweet data to system, simply create a text file containing information like as follows:
 
 ***"tweet_id": "tweet_class"***
 
