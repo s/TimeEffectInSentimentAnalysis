@@ -121,3 +121,15 @@ class Main:
         final_result = dict(zip(terms, freqs))
 
         return final_result
+
+    def plot_years_intersection_scores(self):
+        """
+        Makes necessary function callst to plot a matrix which shows years' vocabularies similarities
+        :return: void
+        """
+        years_features_counts = {}
+
+        for year in self.years:
+            years_features_counts[year] = self.find_frequency_dictionary_for_year(year)
+
+        self.__plot_manager.plot_years_intersection_scores(years_features_counts)

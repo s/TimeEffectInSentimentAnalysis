@@ -36,4 +36,9 @@ if __name__ == "__main__":
     """
     Example code to plot top info gain features' frequencies in __years.
     """
-    main.plot_top_feature_frequencies_in_years()
+    #main.plot_top_feature_frequencies_in_years()
+
+    """
+    Example code to plot __years' intersection scores with each other
+    """
+    main.plot_years_intersection_scores()

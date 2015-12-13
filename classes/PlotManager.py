@@ -15,6 +15,7 @@ class PlotManager:
     """
     def __init__(self):
         self.__helper = GeneralHelpers()
+        self.__first_year = 2012
         self.__colors = ['r', 'b', 'y', 'm', 'g', 'c', 'k']
         self.__years = ('2012', '2013', '2014', '2015')
 
@@ -182,3 +183,43 @@ class PlotManager:
 
         plt.legend(loc=1, handles=handles)
         plt.show()
+
+    def plot_years_intersection_scores(self, years_features_counts):
+        """
+        Plots a matrix which shows __years' vocabularies similarities
+        :param years_features_counts: dict
+        :return: void
+        """
+
+        years_intersection_scores = np.zeros((len(self.__years),len(self.__years)))
+        feature_frequencies = years_features_counts
+
+        for first_iteration_number, (x_year, x_years_features) in enumerate(feature_frequencies.iteritems()):
+            features_of_x = x_years_features.keys()
+            total_count = np.sum(x_years_features.values())
+
+            for second_iteration_number, (y_year, y_years_features) in enumerate(feature_frequencies.iteritems()):
+
+                if x_year == y_year:
+                    pass
+
+                else:
+                    features_of_y = y_years_features.keys()
+                    intersect = list(set(features_of_x) & set(features_of_y))
+
+
+                    intersect_count = 0
+                    for intersect_item in intersect:
+                        intersect_count = intersect_count + y_years_features[intersect_item]
+
+                    ratio = float(intersect_count)/total_count
+
+                    i_index = int(x_year) - self.__first_year #0
+                    j_index = int(y_year) - self.__first_year #1
+                    years_intersection_scores[i_index][j_index] = ratio
+
+
+        all_scores_df = pd.DataFrame(years_intersection_scores, self.__years, self.__years)
+
+        print(MODEL_NAME+'\'s __years\' vocabulary similarities:')
+        print(all_scores_df)
