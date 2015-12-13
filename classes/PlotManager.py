@@ -134,3 +134,51 @@ class PlotManager:
             ax.plot(xs, ys, self.__colors[iteration_number], label=names_of_classifiers[iteration_number])
             plt.legend()
         plt.show()
+
+    def plot_top_feature_frequencies_in_years(self, years_features_counts):
+        """
+        Plots top features' frequencies in __years
+        :return: void
+        """
+
+        plot_feature_counts = {}
+        bar_width = 0.20
+
+        for feature_name in INFO_GAIN_ATTRIBUTES:
+            if not feature_name in plot_feature_counts:
+                plot_feature_counts[feature_name] = []
+
+            f_key = feature_name.decode('utf-8')
+
+            for year in self.__years:
+                if not f_key in years_features_counts[year]:
+                    years_features_counts[year][f_key] = 0
+
+            plot_feature_counts[feature_name] = [years_features_counts["2012"][f_key],
+                                                  years_features_counts["2013"][f_key],
+                                                  years_features_counts["2014"][f_key],
+                                                  years_features_counts["2015"][f_key]
+                                                ]
+        print(plot_feature_counts)
+
+        indexes = np.arange(len(plot_feature_counts.keys()))
+
+        for first_iteration_number, (feature_name, feature_counts) in enumerate(plot_feature_counts.iteritems()):
+            for second_iteration_number, (color, feature_count) in enumerate(zip(self.__colors, feature_counts)):
+                x_coord = first_iteration_number + (second_iteration_number*bar_width)
+                plt.bar(x_coord, feature_count, bar_width, color=color)
+
+        xticks = [key.decode('utf-8') for key in plot_feature_counts.keys()]
+
+        plt.xlabel('Features')
+        plt.ylabel('Frequencies in __years')
+        plt.title('InfoGain features by year and features(' + MODEL_NAME + ')')
+        plt.xticks(indexes + bar_width*2, xticks)
+
+        handles = []
+        for idx, (year, color) in enumerate(zip(self.__years, self.__colors)):
+            patch = Patch(color=color, label=year)
+            handles.append(patch)
+
+        plt.legend(loc=1, handles=handles)
+        plt.show()

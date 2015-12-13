@@ -19,6 +19,8 @@ class Main:
         self.__plot_manager = PlotManager()
         self.__feature_manager = FeatureManager()
 
+        self.years = ("2012", "2013", "2014", "2015")
+
     def retrieve_tweets(self, file_path_of_ids):
         """
         Runs Import Manager to retrieve and import tweets
@@ -83,3 +85,39 @@ class Main:
         :return: void
         """
         self.__plot_manager.plot_2012_vs_rest(root_dir)
+
+    def plot_top_feature_frequencies_in_years(self):
+        """
+        Makes necessary function calls to plot top features frequencies' in years
+        :return: void
+        """
+        years_features_counts = {}
+
+        for year in self.years:
+            years_features_counts[year] = self.find_frequency_dictionary_for_year(year)
+
+        self.__plot_manager.plot_top_feature_frequencies_in_years(years_features_counts)
+
+    def find_frequency_dictionary_for_year(self, year):
+        """
+        Finds frequencies of each feature for given year
+        :param year: string
+        :return: dict
+        """
+        # For this particular method, find_roots=True, n=1, analyzer=word because we're working with top info gain words
+
+        tweets_for_the_year = self.__db_manager.get_tweets_for_year(year)
+        document, classes = self.__feature_manager.create_document_and_classes_for_tweets(tweets_for_the_year, find_roots=True)
+        ngrams, arff_data, vectorizer, X = self.__feature_manager.fit_data(document, classes, n=1, analyzer='word')
+
+        terms = vectorizer.get_feature_names()
+        freqs = X.sum(axis=0).A1
+
+        result = sorted(zip(freqs, terms), reverse=True)
+
+        freqs = [elm[0] for elm in result]
+        terms = [elm[1] for elm in result]
+
+        final_result = dict(zip(terms, freqs))
+
+        return final_result

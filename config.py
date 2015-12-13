@@ -34,3 +34,10 @@ TWITTER_ACCESS_TOKEN_SECRET = ""
 FEATURE_TYPE = "Word" # or #3Gram
 
 SPECIAL_KEYWORDS = ['TTNet', 'Turkcell', '3G'] # TODO
+
+if "TTNet" == MODEL_NAME:
+    INFO_GAIN_ATTRIBUTES = ["sev", "çek", "bedava", "internet", "iyi", "teşekkür", "söyle", "bebek", "yavaş", "indir",
+                            "genç", "san", "bu", "tatlı", "ede", "nefret", "gangnam", "çekim", "para", "siz"]
+elif "Turkcell" == MODEL_NAME:
+    INFO_GAIN_ATTRIBUTES = ["müzik", "arena", "internet", "şarkı", "teşekkür", "böyle", "cif", "yavaş", "güzel", "gibi",
+                            "net","sen", "hız", "para", "aracı", "ver", "daha", "kes", "sev"]

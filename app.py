@@ -29,6 +29,11 @@ if __name__ == "__main__":
     """
     Example code to plot 2012 vs rest
     """
-    root_path_for_2012_vs_rest = PROJECT_ROOT_DIRECTORY + DATASET_LOGS_DIR_NAME + FEATURE_TYPE + \
-                                 LOGS_2012_VS_REST + MODEL_NAME
-    main.plot_2012_vs_rest(root_path_for_2012_vs_rest)
+    # root_path_for_2012_vs_rest = PROJECT_ROOT_DIRECTORY + DATASET_LOGS_DIR_NAME + FEATURE_TYPE + \
+    #                              LOGS_2012_VS_REST + MODEL_NAME
+    # main.plot_2012_vs_rest(root_path_for_2012_vs_rest)
+
+    """
+    Example code to plot top info gain features' frequencies in __years.
+    """
+    main.plot_top_feature_frequencies_in_years()
