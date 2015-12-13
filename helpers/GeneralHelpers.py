@@ -226,3 +226,107 @@ class GeneralHelpers:
             return float(accuracy)
         else:
             return -1.0
+
+    def get_log_files_stats(self, root_dir):
+        """
+        Returns each classifier's monthly accuracy scores from log files.
+        :param root_dir: string
+        :return: dict
+        """
+
+        # Going to log files directory
+        os.chdir(root_dir)
+
+        all_log_files = {}
+
+        # iterating over log files of a model (say, Turkcell)
+        for txt_file in glob("*.txt"):
+            # openning file
+            with open(txt_file, 'r') as a_log_file:
+                # getting log file's name
+                file_name = a_log_file.name.split(".")[0]
+
+                # updating data model with log file's content
+                all_log_files.update({file_name: a_log_file.read()})
+
+        # we got a model and we need it month's lengths (Say, we got 42 tweets for October)
+        self.model_month_counts = self.__db_manager.get_months_lengths()
+
+        all_accuracy_scores = {}
+
+        # iterating log files we previously read
+        for log_file_name, log_file_content in all_log_files.iteritems():
+            accuracy_scores = self.get_accuracy_scores_per_month_from_log_file(log_file_content)
+
+            if not log_file_name in all_accuracy_scores:
+                all_accuracy_scores[log_file_name] = accuracy_scores
+
+        return all_accuracy_scores
+
+    def get_accuracy_scores_per_month_from_log_file(self, log_file_content):
+        """
+        Returns each year's [true, total] predictions for given log file content
+        :param log_file_content: string
+        :return: dict
+        """
+        predict_lines_in_file = re.findall(self.regexp_for_predict_lines, log_file_content)
+
+        correct_vs_total_values = {}
+        start_idx = 0
+        # e.g. { 2014: [42, 42, ...., 38] }
+        for year, months_lengths in self.model_month_counts.iteritems():
+
+            # e.g. 42
+            for month_length in months_lengths:
+
+                end_idx = start_idx + month_length
+
+                # a months' stats
+                a_months_stats = [0, month_length]  # (Correct, Total)
+
+                # slicing months' lines to find lines like: "1 3:positive 3:positive          0      0     *1"
+                months_lines = predict_lines_in_file[start_idx:end_idx]
+
+                # iterating over a month's lines to find accuracy
+                for month_line in months_lines:
+
+                    # if line contains + it's an error
+                    if not '+' in month_line:
+                        a_months_stats[0] += 1
+
+                if not year in correct_vs_total_values:
+                    correct_vs_total_values[year] = []
+
+                correct_vs_total_values[year].append(a_months_stats)
+
+                start_idx += month_length
+
+        """
+        Example correct_vs_total_values:
+        {
+            2013: [[25, 43], [26, 42], [21, 42], [31, 44], [25, 42], [24, 40], [27, 42], [23, 42], [23, 43], [28, 41], [25, 42], [21, 39]],
+            2014: [[35, 55], [19, 39], [25, 46], [32, 43], [23, 42], [25, 42], [27, 42], [28, 45], [25, 45], [27, 45], [23, 42], [15, 27]],
+            2015: [[25, 43], [32, 56], [34, 57], [36, 56], [31, 54], [35, 55], [37, 68], [38, 57], [27, 51]]
+        }
+        """
+        # Let's find accuracies now.
+
+        accuracy_scores = {}
+
+        for year, all_months_predictions in correct_vs_total_values.iteritems():
+
+            if not year in accuracy_scores:
+                accuracy_scores[year] = []
+
+            for month_predictions in all_months_predictions:
+                correct_predictions = month_predictions[0]
+                total_predictions = month_predictions[1]
+
+                one_acc_score = float(correct_predictions) / total_predictions
+                one_acc_score *= 100
+                one_acc_score = round(one_acc_score, 2)
+
+
+                accuracy_scores[year].append(one_acc_score)
+
+        return accuracy_scores

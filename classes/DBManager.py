@@ -88,3 +88,38 @@ class DBManager:
         model = self.get_new_model()
         tweets_count = self.session.query(model).filter(year == extract('year', model.created_at)).count()
         return tweets_count
+
+    def get_months_lengths(self):
+        """
+        Returns monthly tweet counts of a given model
+        :return: list
+        """
+        table_name = self.get_model_table_name()
+        model_month_counts = {}
+        q = """
+            select
+                count(*),
+                month(created_at),
+                year(created_at)
+            from """ + table_name + """
+            where
+                created_at >= '2013-01-01'
+            group by
+                year(created_at),
+                month(created_at)
+            """
+        month_lengths = self.engine.execute(q)
+
+        for count, month, year in month_lengths:
+            if not year in model_month_counts:
+                model_month_counts[year] = []
+            model_month_counts[year].append(count)
+
+        return model_month_counts
+
+    def get_model_table_name(self):
+        """
+        Returns table name of model
+        :return: string
+        """
+        return MODEL_NAME + 'Tweets'

@@ -22,6 +22,13 @@ if __name__ == "__main__":
     Example code to plot __years' scores
     """
     #root path, ../DataSet-Logs/Word/YearsOnly/TTNet/
-    root_path_for_years_itself = PROJECT_ROOT_DIRECTORY + DATASET_LOGS_DIR_NAME + FEATURE_TYPE+\
-                                LOGS_YEARS_ITSELF_DIR_NAME+MODEL_NAME+'/'
-    main.plot_years_scores(root_path_for_years_itself)
+    #root_path_for_years_itself = PROJECT_ROOT_DIRECTORY + DATASET_LOGS_DIR_NAME + FEATURE_TYPE+\
+    #                           LOGS_YEARS_ITSELF_DIR_NAME+MODEL_NAME+'/'
+    #main.plot_years_scores(root_path_for_years_itself)
+
+    """
+    Example code to plot 2012 vs rest
+    """
+    root_path_for_2012_vs_rest = PROJECT_ROOT_DIRECTORY + DATASET_LOGS_DIR_NAME + FEATURE_TYPE + \
+                                 LOGS_2012_VS_REST + MODEL_NAME
+    main.plot_2012_vs_rest(root_path_for_2012_vs_rest)

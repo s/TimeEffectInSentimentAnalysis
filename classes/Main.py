@@ -75,3 +75,11 @@ class Main:
         :return: void
         """
         self.__plot_manager.plot_years_scores_from_root_directory(root_dir)
+
+    def plot_2012_vs_rest(self, root_dir):
+        """
+        Makes necessary function calls to plot 2012 vs REST scores
+        :param root_dir: string
+        :return: void
+        """
+        self.__plot_manager.plot_2012_vs_rest(root_dir)
