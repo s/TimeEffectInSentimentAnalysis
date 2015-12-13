@@ -171,3 +171,58 @@ class GeneralHelpers:
         # Getting output
         output = process_call.communicate()[0].decode('utf-8')
         return output
+
+    def get_accuracy_scores_for_years_from_root_dir(self, root_dir):
+        """
+        Returns a dict of __years' classifier scores
+        :param root_dir: string, path to root directory
+        :return: dict, __years' classifier scores
+        """
+        years_scores = {}
+
+        # Iterating over directories in root directory
+        for root, dirs, files in os.walk(root_dir):
+
+            # Iterating over files in a directory
+            for file_name in files:
+
+                # If it's a txt file we got it. E.g. TTNet_2015_SMO.txt
+                if file_name.endswith('.txt'):
+
+                    file_path = root + '/' + file_name
+                    model_name, year, classifier_name = file_name.rstrip('.txt').split("_") #TTNet, 2015, SMO
+
+                    if not year in years_scores:
+                        years_scores[year] = {}
+
+                    with open(file_path, 'r') as classifier_log_file:
+                        file_content = classifier_log_file.read()
+                        years_scores[year][classifier_name] = self.get_accuracy_score_from_log_file_content(file_content)
+
+        # Calculating mean for each year and sorting
+        for year, classifiers in years_scores.iteritems():
+            all_classifier_scores = np.array(classifiers.values())
+            years_scores[year]['MEAN'] = round(all_classifier_scores.mean(), 2)
+            years_scores[year] = collections.OrderedDict(sorted(years_scores[year].items()))
+
+        sorted_years_scores = collections.OrderedDict(sorted(years_scores.items()))
+
+        return sorted_years_scores
+
+    def get_accuracy_score_from_log_file_content(self, log_file_content):
+        """
+        Returns accuracy score of log file
+        :param log_file_content: string
+        :return: float
+        """
+        regexp_for_accuracy_lines = "Correctly Classified Instances.{1,}"
+
+        classifier_accuracy_lines = re.findall(regexp_for_accuracy_lines, log_file_content, re.IGNORECASE)
+
+        if len(classifier_accuracy_lines):
+            accuracy_line = classifier_accuracy_lines[0]
+            accuracy_line_components = accuracy_line.split() #['Correctly', 'Classified', 'Instances', '209', '41.8', '%']
+            accuracy = accuracy_line_components[4]
+            return float(accuracy)
+        else:
+            return -1.0

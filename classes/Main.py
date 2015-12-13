@@ -6,6 +6,7 @@ from random import randint
 
 from DBManager import DBManager
 from ImportManager import ImportManager
+from PlotManager import PlotManager
 from FeatureManager import FeatureManager
 
 from helpers.GeneralHelpers import GeneralHelpers
@@ -15,6 +16,7 @@ class Main:
     def __init__(self):
         self.__db_manager = DBManager()
         self.__helper = GeneralHelpers()
+        self.__plot_manager = PlotManager()
         self.__feature_manager = FeatureManager()
 
     def retrieve_tweets(self, file_path_of_ids):
@@ -65,3 +67,11 @@ class Main:
         self.__helper.generate_arff_file(arff_file_path, file_name, formatted_arff_data)
 
         print("Arff file generated at path:"+arff_file_path+file_name)
+
+    def plot_years_scores(self, root_dir):
+        """
+        Makes necessary function calls to plot years scores
+        :param dir: string
+        :return: void
+        """
+        self.__plot_manager.plot_years_scores_from_root_directory(root_dir)
