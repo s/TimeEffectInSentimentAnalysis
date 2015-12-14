@@ -196,7 +196,7 @@ class PlotManager:
 
         plt.xlabel('Years')
         plt.ylabel('Scores %')
-        plt.title('Scores by year with changing training sets. Classifier=SMO(Linear Kernel), Feature=Word.')
+        plt.title('Scores by year with changing training sets. Classifier=RF(n=100), Probability Classifier=RF(n=100), Feature=Word, TTNet')
         plt.legend()
         plt.show()
 
@@ -227,7 +227,6 @@ class PlotManager:
         handles = []
         for first_iteration_number, (line_name, line_points) in enumerate(lines_scores.iteritems()):
             line_max, line_min = 0, 100
-            print(line_points)
             if line_name != "line2":
                 ys = line_points.values()
                 line_max, line_min = np.max(ys), np.min(ys)
@@ -256,9 +255,11 @@ class PlotManager:
         ax.set_xticklabels(["","13","","14","","15"])
         plt.xlabel('Years')
         plt.ylabel('Scores %')
-        plt.title('Scores by year with changing training sets. Classifier=NaiveBayes, Feature=Word.')
+        plt.title('Scores by year with changing training sets. Classifier=SVM, ProbClassifier=SVM Feature=Word.')
         plt.tight_layout()
         plt.show()
+
+            # for second_iteration_number, (experiment_year, experiment_year_score) in enumerate(line_points.)
 
     def _plot_2012_vs_rest_monthly(self, all_accuracy_scores):
         """

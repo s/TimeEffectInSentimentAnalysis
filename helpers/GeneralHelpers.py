@@ -6,6 +6,7 @@ import arff
 import json
 import codecs
 import random
+import pprint
 import datetime
 import numpy as np
 import collections
@@ -405,8 +406,45 @@ class GeneralHelpers:
                     min_mean_max_mean = np.mean(scores_list, axis=0)
                     final_result_of_all_experiments[line_name][setup_name] = min_mean_max_mean
 
+        print('Relative scores:')
+        pprint.pprint(final_result_of_all_experiments, width=2)
+        for line_name, score in final_result_of_all_experiments['line3'].iteritems():
+
+            target_line1_key = self.get_line1_key_from_line3_key(line_name)
+            new_line3_score = final_result_of_all_experiments['line1'][target_line1_key] + score
+            final_result_of_all_experiments['line3'][line_name] = new_line3_score
+
+        print('Absolute scores:')
+        pprint.pprint(final_result_of_all_experiments, width=2)
+
         return final_result_of_all_experiments
 
+    def calculate_relative_scores(self, all_scores):
+        """
+        Calculates relative scores of line3 according to line1
+        :return: void
+        """
+
+        line1_scores = all_scores['line1']
+
+        for setup_name, score in all_scores['line3'].iteritems():
+
+            target_line1_key = self.get_line1_key_from_line3_key(setup_name)
+            difference = score - line1_scores[target_line1_key]
+            all_scores['line3'][setup_name] = difference
+
+        return all_scores
+
+
+    def get_line1_key_from_line3_key(self, line3_key):
+        """
+        Returns relevant line1 key from line3 key
+        :param line3_key: string
+        :return: string
+        """
+        regexp_for_target_keys = "\+(2012|2013|2014|2015)_50"
+        target_line1_key = re.sub(regexp_for_target_keys, "", line3_key)
+        return target_line1_key
 
     def _write_json_to_file(self, json_data, file_path):
         """
