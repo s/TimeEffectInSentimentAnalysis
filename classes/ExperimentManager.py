@@ -1,40 +1,44 @@
-import re
-import sys
-import numpy as np
 from config import *
 from random import randint
-from multiprocessing import Process
+
+import numpy as np
 
 from scipy import *
 from scipy import sparse
 
 from matplotlib import pyplot as plt
 
-from sklearn.metrics import *
-from sklearn import preprocessing
-from sklearn.utils import shuffle
-from sklearn.datasets import load_iris
-from sklearn.feature_extraction.text import CountVectorizer
-
-from sklearn import tree
 from sklearn.svm import SVC
+from sklearn.metrics import *
+from sklearn.utils import shuffle
+from sklearn import preprocessing
+from sklearn.cluster import KMeans
 from sklearn.decomposition import TruncatedSVD
-from sklearn.neighbors import NearestNeighbors
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import CountVectorizer
+
 
 class ExperimentManager:
     """
-    This class run an experiment
+    This class consists core methods of an active learning experiment.
     """
     def __init__(self, experiment_number, years_tweets_counts, n=1, analyzer='word'):
+        """
+        Constructor method
+        :param experiment_number: int
+        :param years_tweets_counts: dict
+        :param n: int
+        :param analyzer: string
+        :return: ExperimentManager
+        """
+
         self.__n = n
         self.__all_scores = {}
         self.__feature_count = 0
         self.__analyzer = analyzer
         self.__experiment_number = experiment_number
         self.__years_tweets_counts= years_tweets_counts
-
 
         self.__label_encoder = preprocessing.LabelEncoder()
         self.__label_encoder.fit(SENTIMENT_CLASSES)
@@ -99,9 +103,18 @@ class ExperimentManager:
                 '2015_200+2012_500/2015_300': 0.53000000000000003
             },
             'line3': {
-                '2012_500+2015_50/2015_300': 0.5033333333333333,
-                '2012_500+2014_50/2014_300': 0.5,
-                '2012_500+2013_50/2013_300': 0.58666666666666667
+                'L1-2012_500+2015_50/2015_300': 0.5033333333333333,
+                'L1-2012_500+2014_50/2014_300': 0.5,
+                'L1-2012_500+2013_50/2013_300': 0.58666666666666667,
+
+                'L2-2012_500+2015_50/2015_300': 0.5033333333333333,
+                'L2-2012_500+2014_50/2014_300': 0.5,
+                'L2-2012_500+2013_50/2013_300': 0.58666666666666667,
+
+                'L3-2012_500+2015_50/2015_300': 0.5033333333333333,
+                'L3-2012_500+2014_50/2014_300': 0.5,
+                'L3-2012_500+2013_50/2013_300': 0.58666666666666667
+
             },
             'line2': {
                 '2013_50+2012_500/2013_300': [0.56333333333333335, 0.58833333333333326, 0.60999999999999999],
@@ -130,9 +143,11 @@ class ExperimentManager:
 
     def _split_dataset_to_years(self, X, X_sparse, y):
         """
-
-        :param X:
-        :return:
+        Splits dataset to each year respectively
+        :param X: dense data
+        :param X_sparse: scipy.sparse
+        :param y: list
+        :return: dense matrice, scipy.sparse, list
         """
 
         start_index = 0
@@ -151,10 +166,11 @@ class ExperimentManager:
 
     def _shuffle_years(self, years_X, years_X_sparse, years_y):
         """
-
-        :param years_X:
-        :param years_y:
-        :return:
+        Shuffles years' tweets
+        :param years_X: dense data
+        :param years_X_sparse: scipy.sparse
+        :param years_y: list
+        :return: dense matrice, scipy.sparse, list
         """
         for year_name, year_data in years_X_sparse.iteritems():
             normal = years_X[year_name]
@@ -166,9 +182,10 @@ class ExperimentManager:
 
     def _create_years_partitions(self, years_X, years_y):
         """
-
-        :param arff_data_for_years:
-        :return:
+        Creates partitions of each year
+        :param years_X: scipy.sparse
+        :param years_y: list
+        :return: scipy.sparse, list
         """
         splitted_X = {}
         splitted_y = {}
@@ -215,10 +232,10 @@ class ExperimentManager:
 
     def _go_over_lines_setups(self, years_X_sparse, years_y):
         """
-
-        :param years_X_sparse:
-        :param years_y:
-        :return:
+        Iterates over LINES_SETUPS dictionary to run classifications
+        :param years_X_sparse: scipy.sparse
+        :param years_y: list
+        :return: void
         """
 
         # Iterating over lines
@@ -226,7 +243,7 @@ class ExperimentManager:
             print('Currently running on Experiment #'+str(self.__experiment_number)+', '+line_name)
             self.__all_scores[line_name] = {}
 
-            # Itearating over each setup( say 500-2012, 200-2013 / 300-2013)
+            # Iterating over each setup( say 500-2012, 200-2013 / 300-2013)
             for iteration_index, (train_set_setup, test_set_setup) in enumerate(zip(line_value['train'],
                                                                                     line_value['test'])):
 
@@ -243,14 +260,15 @@ class ExperimentManager:
                     for random_50_iteration_index in range(0, LINE2_RANDOM_ITERATION_NUMBER):
 
                         X_train, X_test, y_train, y_test, train_set_name, test_set_name = \
-                        self._create_train_and_test_sets_from_setup_dict(years_X_sparse, years_y, train_set_setup, test_set_setup, line_name, random_50_iteration_index)
+                        self._create_train_and_test_sets_from_setup_dict(years_X_sparse, years_y, train_set_setup,
+                                                                         test_set_setup, line_name, random_50_iteration_index)
 
                         acc_score = self._classify(X_train, X_test, y_train, y_test)
                         self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
 
                 elif line_name == "line3":
 
-                    # Find train set and test set
+                    # Find train set and test set - preperation
                     probability_setup = LINE3_PROB_SETUP[iteration_index]
                     prob_train_setup = probability_setup['train']
                     prob_test_setup = probability_setup['test']
@@ -264,54 +282,50 @@ class ExperimentManager:
                     prob_X_test = years_X_sparse[prob_test_year][prob_test_count]
                     prob_y_test = np.array(years_y[prob_test_year][prob_test_count])
 
-
-                    # Find probabilities
-                    probabilities = self._predict_probabilities(prob_X_train, prob_X_test, prob_y_train)
-
-                    # Find closest samples to the decision boundary
-                    indexes_of_samples_closest_to_decision_boundary = self._get_sample_indexes_closest_to_decision_boundary(probabilities)
-
-                    samples_closest_to_decision_boundary_X = prob_X_test[indexes_of_samples_closest_to_decision_boundary]
-                    samples_closest_to_decision_boundary_y = prob_y_test[indexes_of_samples_closest_to_decision_boundary]
-
-                    # Find final train and test set
-                    final_X_train = prob_X_train.toarray().tolist()
-                    final_X_train += samples_closest_to_decision_boundary_X.toarray().tolist()
-
-                    final_sparse_X_train = sparse.csr_matrix(final_X_train)
-
-                    final_y_train = []
-                    final_y_train = prob_y_train[:]
-                    final_y_train += samples_closest_to_decision_boundary_y.tolist()
-
                     final_X_test_year = test_set_setup.keys()[0] #2013
                     final_X_test_tweet_count = test_set_setup[final_X_test_year] #300
 
                     final_X_test = years_X_sparse[final_X_test_year][final_X_test_tweet_count]
                     final_y_test = years_y[final_X_test_year][final_X_test_tweet_count]
 
-
-                    # Test model and save the score
-                    acc_score = self._classify(final_sparse_X_train, final_X_test, final_y_train, final_y_test)
-
-                    train_set_name = prob_train_year + "_" + prob_train_count + "+" + prob_test_year + "_" + str(MOST_DISTINCT_SAMPLE_SIZE)
                     test_set_name = final_X_test_year + "_" + final_X_test_tweet_count
-                    self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
+                    train_set_name_appendix = prob_train_year + "_" + prob_train_count + "+" + prob_test_year + "_" + str(MOST_DISTINCT_SAMPLE_SIZE)
 
 
-                    if PLOT_DECISION_BOUNDARIES_FOR_LINE_3:
-                        # Plot decision boundary of probabilities with PCA
-                        plot_title = train_set_name + '/' + test_set_name
-                        self._plot_decision_boundary(prob_X_train, prob_X_test, prob_y_train, prob_y_test,
-                                                     indexes_of_samples_closest_to_decision_boundary, plot_title)
+                    # Active Learning Method - I
+                    samples_closest_to_decision_boundary_X, samples_closest_to_decision_boundary_y = \
+                        self._choose_ale_samples_closest_to_decision_boundary(prob_X_train, prob_X_test, prob_y_train, prob_y_test)
+
+                    acc_score_for_ale_one = self._combine_train_sets_and_run_classification(prob_X_train, final_X_test,
+                                                                                            samples_closest_to_decision_boundary_X,
+                                                                                            prob_y_train, final_y_test,
+                                                                                            samples_closest_to_decision_boundary_y)
+
+                    train_set_name = "L1-" + train_set_name_appendix
+                    self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score_for_ale_one)
+
+
+                    # Active Learning Method - II
+                    #train_set_name = "L2-" + train_set_name_appendix
+                    #self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
+
+
+                    # Active Learning Method - III
+                    #train_set_name = "L3-" + train_set_name_appendix
+                    #self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
+
 
 
     def _create_train_and_test_sets_from_setup_dict(self, years_X_sparse, years_y, train_setup, test_setup, line_name, iteration_number):
         """
-
-        :param years_X_sparse:
-        :param years_y:
-        :return:
+        Creates necessary train set and test set from given setup dictionary
+        :param years_X_sparse: scipy.sparse
+        :param years_y: list
+        :param train_setup: dict
+        :param test_setup: dict
+        :param line_name: string
+        :param iteration_number: int
+        :return: scipy.sparse, scipy.sparse, list, list, string, string
         """
 
         X_train = []
@@ -364,15 +378,15 @@ class ExperimentManager:
 
     def _classify(self, X_train, X_test, y_train, y_test):
         """
-
-        :param X_train:
-        :param X_test:
-        :param y_train:
-        :param y_test:
-        :return:
+        Makes a classification with given train and test sets
+        :param X_train: scipy.sparse
+        :param X_test: scipy.sparse
+        :param y_train: list
+        :param y_test: list
+        :return: float
         """
         # Creating SVM instance
-        classifier = self._get_new_classifier()
+        classifier = self._get_new_model_for_general_purpose()
 
         y_train = self.__label_encoder.transform(y_train)
         y_test  = self.__label_encoder.transform(y_test)
@@ -408,7 +422,7 @@ class ExperimentManager:
 
     def _cumulate_scores_of_line2(self):
         """
-        Cumulates line2's scores like [min, mean, max]
+        Cumulates line2's scores from LINE2_RANDOM_ITERATION_NUMBER experiments into an array like: [min, mean, max]
         :return: void
         """
         # Iterating over line2's scores
@@ -430,12 +444,13 @@ class ExperimentManager:
 
     def _predict_probabilities(self, X_train, X_test, y_train):
         """
-        Returns probabilities of each sample in X_test
-        :param X_train:
-        :param X_test:
-        :param y_train:
-        :param y_test:
-        :return:
+        This method calculates the probabilities of test set samples belogning each sentiment class using a model.
+
+        :param X_train: scipy.sparse
+        :param X_test: scipy.sparse
+        :param y_train: list
+        :param y_test: list
+        :return: list
         """
         # Getting new model instance
         classifier = self._get_new_model_for_logical_selection()
@@ -448,25 +463,25 @@ class ExperimentManager:
 
         return probabilities
 
-    def _get_new_classifier(self):
+    def _get_new_model_for_general_purpose(self):
         """
         Returns new classifier instance
         :return: OneVsRestClassifier
         """
-        classifier = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
-        classifier = OneVsRestClassifier(classifier)
-        #classifier = RandomForestClassifier(n_estimators=100)
+        # model_for_general_purpose = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
+        # model_for_general_purpose = OneVsRestClassifier(model_for_general_purpose)
+        model_for_general_purpose = RandomForestClassifier(n_estimators=100)
 
-        return classifier
+        return model_for_general_purpose
 
     def _get_new_model_for_logical_selection(self):
         """
         Returns new classifier instance for logical selection
         :return:
         """
-        model_for_logical_selection = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
-        model_for_logical_selection = OneVsRestClassifier(model_for_logical_selection)
-        #model_for_logical_selection = RandomForestClassifier(n_estimators=100)
+        # model_for_logical_selection = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
+        # model_for_logical_selection = OneVsRestClassifier(model_for_logical_selection)
+        model_for_logical_selection = RandomForestClassifier(n_estimators=100)
 
         return model_for_logical_selection
 
@@ -492,14 +507,18 @@ class ExperimentManager:
 
     def _plot_decision_boundary(self, X_train, X_test, y_train, y_test, highlighted_samples_indexes, plot_title):
         """
-        Plots decision boundary of a point in line3
-        :param X_train:
-        :param y_train:
-        :return:
+        Plots decision boundary of a point in line3 using dimensionality reduction with PCA(TruncatedSVD)
+        :param X_train: scipy.sparse
+        :param X_test: scipy.sparse
+        :param y_train: list
+        :param y_test: list
+        :param highlighted_samples_indexes: list
+        :param plot_title: string
+        :return: void
         """
 
         # Creating classifiers
-        classifier = self._get_new_classifier()
+        classifier = self._get_new_model_for_general_purpose()
         svd = TruncatedSVD(n_components=2)
 
         # Encoding labeles to float
@@ -563,5 +582,54 @@ class ExperimentManager:
                    fc=(1., 0.8, 0.8),
                    )
          )
-        #plt.title("PCA reduction (2d) of "+MODEL_NAME+" dataset w SVM Decision Boundary "+plot_title)
+
         plt.show()
+
+    def _choose_ale_samples_closest_to_decision_boundary(self, prob_X_train, prob_X_test, prob_y_train, prob_y_test):
+        """
+
+        :return:
+        """
+        # Find probabilities
+        probabilities = self._predict_probabilities(prob_X_train, prob_X_test, prob_y_train)
+
+        # Find closest samples to the decision boundary
+        indexes_of_samples_closest_to_decision_boundary = self._get_sample_indexes_closest_to_decision_boundary(probabilities)
+
+        samples_closest_to_decision_boundary_X = prob_X_test[indexes_of_samples_closest_to_decision_boundary]
+        samples_closest_to_decision_boundary_y = prob_y_test[indexes_of_samples_closest_to_decision_boundary]
+
+        return samples_closest_to_decision_boundary_X, samples_closest_to_decision_boundary_y
+
+    def _ale_by_clustering_samples_with_original_features(self):
+        """
+        3244
+        :return:
+        """
+        pass
+
+    def _ale_by_clustering_samples_with_combined_features(self):
+        """
+        sinif olasiliklarini kullanarak
+        :return:
+        """
+        pass
+
+    def _combine_train_sets_and_run_classification(self, base_train_X, base_test_X, new_train_X, base_train_y, base_test_y, new_train_y):
+        """
+
+        :return:
+        """
+        # Find final train and test set
+        final_X_train = base_train_X.toarray().tolist()
+        final_X_train += new_train_X.toarray().tolist()
+        final_sparse_X_train = sparse.csr_matrix(final_X_train)
+
+        final_y_train = []
+        final_y_train = base_train_y[:]
+        final_y_train += new_train_y.tolist()
+
+        # Test model and save the score
+        acc_score = self._classify(final_sparse_X_train, base_test_X, final_y_train, base_test_y)
+
+        return acc_score
