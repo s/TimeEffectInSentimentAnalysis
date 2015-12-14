@@ -1,10 +1,14 @@
+import re
 import sys
 import numpy as np
 from config import *
 from random import randint
+from multiprocessing import Process
 
 from scipy import *
 from scipy import sparse
+
+from matplotlib import pyplot as plt
 
 from sklearn.metrics import *
 from sklearn import preprocessing
@@ -14,10 +18,10 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 from sklearn import tree
 from sklearn.svm import SVC
+from sklearn.decomposition import TruncatedSVD
 from sklearn.neighbors import NearestNeighbors
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import RandomForestClassifier
-
 
 class ExperimentManager:
     """
@@ -34,7 +38,6 @@ class ExperimentManager:
 
         self.__label_encoder = preprocessing.LabelEncoder()
         self.__label_encoder.fit(SENTIMENT_CLASSES)
-
 
     def run_experiment(self, document, classes):
         """
@@ -89,21 +92,26 @@ class ExperimentManager:
         self._cumulate_scores_of_line2()
         """
         Example self.__all_scores by now:
-        {
+        self.__all_scores = {
             'line4': {
-                '2013_200+2012_500/2013_300': 0.65,
-                '2014_200+2012_500/2014_300': 0.53,
-                '2015_200+2012_500/2015_300': 0.62
+                '2013_200+2012_500/2013_300': 0.60999999999999999,
+                '2014_200+2012_500/2014_300': 0.51000000000000001,
+                '2015_200+2012_500/2015_300': 0.53000000000000003
+            },
+            'line3': {
+                '2012_500+2015_50/2015_300': 0.5033333333333333,
+                '2012_500+2014_50/2014_300': 0.5,
+                '2012_500+2013_50/2013_300': 0.58666666666666667
             },
             'line2': {
-                '2013_50+2012_500/2013_300': [0.6, 0.61, 0.63],
-                '2014_50+2012_500/2014_300': [0.48, 0.5, 0.51],
-                '2015_50+2012_500/2015_300': [0.6, 0.61, 0.63],
+                '2013_50+2012_500/2013_300': [0.56333333333333335, 0.58833333333333326, 0.60999999999999999],
+                '2015_50+2012_500/2015_300': [0.49666666666666665, 0.51533333333333342, 0.53000000000000003],
+                '2014_50+2012_500/2014_300': [0.48333333333333334, 0.49133333333333329, 0.5]
             },
             'line1': {
-                '2012_500/2013_300': 0.6
-                '2012_500/2014_300': 0.49,
-                '2012_500/2015_300': 0.61,
+                '2012_500/2014_300': 0.46333333333333332,
+                '2012_500/2015_300': 0.52000000000000002,
+                '2012_500/2013_300': 0.58333333333333337
             }
         }
         """
@@ -242,9 +250,7 @@ class ExperimentManager:
 
                 elif line_name == "line3":
 
-                    # Creating train and test sets
-                    prob_y_train = None
-
+                    # Find train set and test set
                     probability_setup = LINE3_PROB_SETUP[iteration_index]
                     prob_train_setup = probability_setup['train']
                     prob_test_setup = probability_setup['test']
@@ -259,12 +265,16 @@ class ExperimentManager:
                     prob_y_test = np.array(years_y[prob_test_year][prob_test_count])
 
 
+                    # Find probabilities
                     probabilities = self._predict_probabilities(prob_X_train, prob_X_test, prob_y_train)
+
+                    # Find closest samples to the decision boundary
                     indexes_of_samples_closest_to_decision_boundary = self._get_sample_indexes_closest_to_decision_boundary(probabilities)
 
                     samples_closest_to_decision_boundary_X = prob_X_test[indexes_of_samples_closest_to_decision_boundary]
                     samples_closest_to_decision_boundary_y = prob_y_test[indexes_of_samples_closest_to_decision_boundary]
 
+                    # Find final train and test set
                     final_X_train = prob_X_train.toarray().tolist()
                     final_X_train += samples_closest_to_decision_boundary_X.toarray().tolist()
 
@@ -280,11 +290,21 @@ class ExperimentManager:
                     final_X_test = years_X_sparse[final_X_test_year][final_X_test_tweet_count]
                     final_y_test = years_y[final_X_test_year][final_X_test_tweet_count]
 
+
+                    # Test model and save the score
                     acc_score = self._classify(final_sparse_X_train, final_X_test, final_y_train, final_y_test)
 
                     train_set_name = prob_train_year + "_" + prob_train_count + "+" + prob_test_year + "_" + str(MOST_DISTINCT_SAMPLE_SIZE)
                     test_set_name = final_X_test_year + "_" + final_X_test_tweet_count
                     self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
+
+
+                    if PLOT_DECISION_BOUNDARIES_FOR_LINE_3:
+                        # Plot decision boundary of probabilities with PCA
+                        plot_title = train_set_name + '/' + test_set_name
+                        self._plot_decision_boundary(prob_X_train, prob_X_test, prob_y_train, prob_y_test,
+                                                     indexes_of_samples_closest_to_decision_boundary, plot_title)
+
 
     def _create_train_and_test_sets_from_setup_dict(self, years_X_sparse, years_y, train_setup, test_setup, line_name, iteration_number):
         """
@@ -365,7 +385,7 @@ class ExperimentManager:
 
         # Getting accuracy score
         acc_score = accuracy_score(y_test, predictions)
-        #acc_score = round(acc_score, 2)
+        #acc_score = round(acc_score, 3)
 
         return acc_score
 
@@ -398,12 +418,15 @@ class ExperimentManager:
             mean_= np.mean(scores_list)
             max_ = np.max(scores_list)
 
+            #min_, mean_, max_ = round(min_, 3), round(mean_, 3), round(max_, 3),
+
             min_mean_max = []
 
             for m in (min_, mean_, max_):
                 min_mean_max.append(m)
 
             self.__all_scores['line2'][train_test_set] = min_mean_max
+
 
     def _predict_probabilities(self, X_train, X_test, y_train):
         """
@@ -430,9 +453,9 @@ class ExperimentManager:
         Returns new classifier instance
         :return: OneVsRestClassifier
         """
-        # classifier = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
-        # classifier = OneVsRestClassifier(classifier)
-        classifier = RandomForestClassifier(n_estimators=100)
+        classifier = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
+        classifier = OneVsRestClassifier(classifier)
+        #classifier = RandomForestClassifier(n_estimators=100)
 
         return classifier
 
@@ -461,8 +484,84 @@ class ExperimentManager:
 
         # Finding elements which have minimum standart deviations
         np_array = np.array(standart_deviations)
-        #print(standart_deviations)
+
         indices_of_minimum_stds = np_array.argsort()[:MOST_DISTINCT_SAMPLE_SIZE]
         # for indice in indices_of_minimum_stds:
-        #     print(samples_probabilities[indice])
+        #     print(samples_probabilities[indice], standart_deviations[indice])
         return indices_of_minimum_stds
+
+    def _plot_decision_boundary(self, X_train, X_test, y_train, y_test, highlighted_samples_indexes, plot_title):
+        """
+        Plots decision boundary of a point in line3
+        :param X_train:
+        :param y_train:
+        :return:
+        """
+
+        # Creating classifiers
+        classifier = self._get_new_classifier()
+        svd = TruncatedSVD(n_components=2)
+
+        # Encoding labeles to float
+        y_train = self.__label_encoder.transform(y_train)
+        y_test = self.__label_encoder.transform(y_test)
+
+        # Splitting normal and highlighted samples
+        probability_ranges = np.arange(X_test.shape[0])
+        normal_samples_indexes = np.setdiff1d(probability_ranges, highlighted_samples_indexes)
+
+        normal_samples_y = y_test[normal_samples_indexes]
+        highlighted_samples_y = y_test[highlighted_samples_indexes]
+
+        # Dimensionality reduction
+        svd_X_train = svd.fit_transform(X_train)
+        svd_X_test = svd.fit_transform(X_test)
+
+        # Training the model
+        classifier.fit(svd_X_train, y_train)
+
+        x_min= min(svd_X_train[:, 0].min(), svd_X_test[:, 0].min()) - 2
+        x_max = max(svd_X_train[:, 0].max(), svd_X_test[:, 0].max()) + 2
+
+        y_min= min(svd_X_train[:, 1].min(), svd_X_test[:, 1].min()) - 2
+        y_max = max(svd_X_train[:, 1].max(), svd_X_test[:, 1].max()) + 2
+
+
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.01),
+                             np.arange(y_min, y_max, 0.01))
+
+        plt.figure(110)
+
+        Z = classifier.predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+        plt.contourf(xx, yy, Z, cmap=plt.cm.Paired, alpha=0.8)
+
+        # Train set
+        #plt.scatter(svd_X_train[:, 0], svd_X_train[:, 1], c=y_train, cmap=plt.cm.Paired)
+
+        # 150 samples from test set those are normal samples
+        plt.scatter(svd_X_test[normal_samples_indexes][:, 0], svd_X_test[normal_samples_indexes][:, 1], c=normal_samples_y, cmap=plt.cm.Paired, s=5)
+
+        # 50 samples from test set those are chosen
+        plt.scatter(svd_X_test[highlighted_samples_indexes][:, 0], svd_X_test[highlighted_samples_indexes][:, 1], c=highlighted_samples_y, cmap=plt.cm.Paired, marker='D', s=50)
+
+        plt.xlabel('Feature 1')
+        plt.ylabel('Feature 2')
+
+        plt.xlim(xx.min(), xx.max())
+        plt.ylim(yy.min(), yy.max())
+
+        info_text = "Reduced to 2 dims from %s dims. Dataset: %s\n" \
+                    "Setup: %s. Explained Variance: %s" % (str(self.__feature_count), MODEL_NAME, plot_title, str(svd.explained_variance_ratio_.sum()))
+
+        plt.title("PCA Projection on Decision Boundary of SVM.")
+
+        plt.text(xx.mean()+2, yy.max()-0.5,  info_text, size=12, rotation=0.,
+         ha="right", va="top",
+         bbox=dict(boxstyle="square",
+                   ec=(1., 0.5, 0.5),
+                   fc=(1., 0.8, 0.8),
+                   )
+         )
+        #plt.title("PCA reduction (2d) of "+MODEL_NAME+" dataset w SVM Decision Boundary "+plot_title)
+        plt.show()
