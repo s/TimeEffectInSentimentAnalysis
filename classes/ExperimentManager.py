@@ -25,6 +25,7 @@ class ExperimentManager:
     """
     This class consists core methods of an active learning experiment.
     """
+
     def __init__(self, experiment_number, years_tweets_counts, n=1, analyzer='word'):
         """
         Constructor method
@@ -462,8 +463,8 @@ class ExperimentManager:
 
     def _get_new_model_for_logical_selection_with_clustering(self):
         """
-
-        :return:
+        Returns new model for clustering in active learning experiment II and III
+        :return: KMeans
         """
         model_for_logical_selection_with_clustering = KMeans(n_clusters = MOST_DISTINCT_SAMPLE_SIZE)
 
@@ -565,8 +566,12 @@ class ExperimentManager:
 
     def _choose_ale_samples_closest_to_decision_boundary(self, prob_X_train, prob_X_test, prob_y_train, prob_y_test):
         """
-
-        :return:
+        Returns closest samples to the decision boundary.
+        :param prob_X_train: scipy.sparse
+        :param prob_X_test: scipy.sparse
+        :param prob_y_train: list
+        :param prob_y_test: list
+        :return: scipy.sparse, list, list
         """
         # Find probabilities
         probabilities = self._predict_probabilities(prob_X_train, prob_X_test, prob_y_train)
@@ -581,7 +586,10 @@ class ExperimentManager:
 
     def _choose_ale_samples_from_cluster_centroids_with_original_features(self, prob_X_test, prob_y_test):
         """
-        :return:
+        Returns samples closest to the cluster centroids with original features.
+        :param prob_X_test: scipy.sparse
+        :param prob_y_test: scipy.sparse
+        :return: scipy.sparse, list, list
         """
         indices_of_closest_samples_to_centroids = []
         clustering_model = self._get_new_model_for_logical_selection_with_clustering()
@@ -593,11 +601,15 @@ class ExperimentManager:
         samples_closest_to_centroids_X = prob_X_test[indices_of_closest_samples_to_centroids]
         samples_closest_to_centroids_y = prob_y_test[indices_of_closest_samples_to_centroids]
 
-        return  samples_closest_to_centroids_X, samples_closest_to_centroids_y, indices_of_closest_samples_to_centroids
+        return samples_closest_to_centroids_X, samples_closest_to_centroids_y, indices_of_closest_samples_to_centroids
 
     def _choose_ale_samples_from_cluster_centroids_with_combined_features(self, probabilities, prob_X_test, prob_y_test):
         """
-        :return:
+        Returns samples closest to cluster centroids with three features(probabilities)
+        :param probabilities: list
+        :param prob_X_test: scipy.sparse
+        :param prob_y_test: scipy.sparse
+        :return: scipy.sparse, list, list
         """
         N_SAMPLES_WITH_MINIMUM_STDS_TO_CLUSTER = 100
 
@@ -613,12 +625,19 @@ class ExperimentManager:
         samples_closest_to_centroids_X = prob_X_test[indices_of_closest_samples_to_centroids]
         samples_closest_to_centroids_y = prob_y_test[indices_of_closest_samples_to_centroids]
 
-        return  samples_closest_to_centroids_X, samples_closest_to_centroids_y, indices_of_closest_samples_to_centroids
+        return samples_closest_to_centroids_X, samples_closest_to_centroids_y, indices_of_closest_samples_to_centroids
 
 
     def _combine_train_sets_and_run_classification(self, base_train_X, base_test_X, new_train_X, base_train_y, base_test_y, new_train_y):
         """
-
+        Combines original train set with additional train set for active learning experiments. Then runs classification
+        with final train and test sets.
+        :param base_train_X: scipy.sparse
+        :param base_test_X: scipy.sparse
+        :param new_train_X: scipy.sparse
+        :param base_train_y: list
+        :param base_test_y: list
+        :param new_train_y: list
         :return:
         """
         # Find final train and test set
@@ -637,9 +656,10 @@ class ExperimentManager:
 
     def _find_standart_deviations_of_samples_probabilities(self, probabilities):
         """
-
-        :param probabilities:
-        :return:
+        Returns standart deviations of given probabilities list to find samples closest to the decision boundary in one
+        step further.
+        :param probabilities: list
+        :return: np.array
         """
 
         standart_deviations = []
@@ -649,6 +669,6 @@ class ExperimentManager:
             standart_deviations.append(mean_of_samples_probabilities)
 
         # Finding elements which have minimum standart deviations
-        np_array = np.array(standart_deviations)
+        np_standart_deviations = np.array(standart_deviations)
 
-        return np_array
+        return np_standart_deviations

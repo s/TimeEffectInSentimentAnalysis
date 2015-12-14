@@ -24,7 +24,7 @@ class GeneralHelpers:
 
     def pretty_print_list(self, list_to_print, message):
         """
-
+        Pretty prints a given list
         :param list_to_print: List, list to print
         :param message: String, a message to print before printing list
         :return: void

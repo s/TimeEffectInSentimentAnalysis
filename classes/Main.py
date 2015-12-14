@@ -115,7 +115,7 @@ class Main:
         all_processes = []
         self.all_experiments_results = []
 
-        pool = Pool(1)
+        pool = Pool(cpu_count()-1 or 1)
         copy_reg.pickle(types.MethodType, self._reduce_method)
 
         print("Running experiments.")

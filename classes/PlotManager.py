@@ -23,7 +23,7 @@ class PlotManager:
 
     def plot_years_scores_from_root_directory(self, root_dir):
         """
-        Plots __years' scores for given classifiers and mean of them
+        Plots years' scores for given classifiers and mean of them
         :param root_dir: string, root directory to scan
         :return: void
         """
@@ -56,7 +56,7 @@ class PlotManager:
 
     def plot_2012_vs_rest(self, root_dir):
         """
-        Plots 2012 vs rest
+        Plots results of classifications of using 2012 as train set, 2013, 2014, 2015 as test set.
         :param root_dir: string
         :return: void
         """
@@ -84,7 +84,7 @@ class PlotManager:
 
     def plot_top_feature_frequencies_in_years(self, years_features_counts):
         """
-        Plots top features' frequencies in __years
+        Plots top features' frequencies in years
         :return: void
         """
 
@@ -132,7 +132,7 @@ class PlotManager:
 
     def plot_years_intersection_scores(self, years_features_counts):
         """
-        Plots a matrix which shows __years' vocabularies similarities
+        Plots a matrix which shows years' vocabularies similarities
         :param years_features_counts: dict
         :return: void
         """
@@ -259,9 +259,9 @@ class PlotManager:
 
     def _plot_2012_vs_rest_monthly(self, all_accuracy_scores):
         """
-
-        :param all_accuracy_scores:
-        :return:
+        Plots 2012 vs REST graphic in monthly basis.
+        :param all_accuracy_scores: dict
+        :return: void
         """
 
         date_ranges = pd.date_range(start='1/1/2013', periods=33, freq='M')
@@ -284,9 +284,9 @@ class PlotManager:
 
     def _plot_2012_vs_rest_yearly(self, all_accuracy_scores):
         """
-
-        :param all_accuracy_scores:
-        :return:
+        Plots 2012 vs REST graphic in yearly basis.
+        :param all_accuracy_scores: dict
+        :return: void
         """
         date_ranges = pd.date_range(start='1/1/2013', periods=3, freq='365D')
         date_ranges = np.array([date_obj.strftime('%y') for date_obj in date_ranges])

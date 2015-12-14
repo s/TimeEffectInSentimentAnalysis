@@ -46,7 +46,12 @@ In our setup, tweet class can either be 'positive', 'negative' or 'neutral'. Onc
 
 **2) DB Manager:** DB Manager completes necessary tasks in database layer such as retrieving tweets for each year and so on. You can just instantiate an instance of DB Manager and make desired method calls to it.
 
-**3) Twitter Manager:** Twitter Manager handles some tasks that require to connect to Twitter API. At the behind the manager uses [tweepy](http://www.tweepy.org/) Python library. You don't need to explicitly make function calls to this library. Import Manager does the task and retrieves information of provided tweet IDs.
+**3) Twitter Manager:** Twitter Manager handles some tasks that require to connect to Twitter API. At the behind the manager uses [tweepy](http://www.tweepy.org/) Python library. You don't need to explicitly make function calls to this library. Import Manager does the task and retrieves information of provided tweet IDs. To be able to import tweets from their IDs using Import Manager, you need to specify some Twitter API credentials in `config.py` file which are given below:
+
+- TWITTER_CONSUMER_TOKEN
+- TWITTER_CONSUMER_SECRET
+- TWITTER_ACCESS_TOKEN_KEY
+- TWITTER_ACCESS_TOKEN_SECRET
 
 **4) Feature Manager:** Feature Manager's main task is feature extraction and vectorizing the documents. Feature Manager uses Preprocess Manager to find relevant features and remove irrelevant ones. In this step [Zemberek]() library is used which is a Turkish morphological parser to find stems of words and correct misspelled words. During this procedure `.jar` calls are made to the `.jar` files, `ZemberekWordStemFinder.jar` and `ZemberekSuggestionFinder.jar` because of [Zemberek]() library is being available only in Java. Both of the `.jar` files is written during the development of the project.
 

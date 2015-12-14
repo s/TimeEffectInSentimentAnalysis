@@ -61,7 +61,7 @@ elif "Turkcell" == MODEL_NAME:
                             "net","sen", "hız", "para", "aracı", "ver", "daha", "kes", "sev"]
 
 #ALE CONSTANTS
-N_EXPERIMENTS = 1
+N_EXPERIMENTS = 5
 BASE_YEAR = '2012'
 MOST_DISTINCT = -998
 RANDOM_SAMPLE_SIZE = 50

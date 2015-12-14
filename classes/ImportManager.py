@@ -8,7 +8,7 @@ from helpers.GeneralHelpers import GeneralHelpers
 class ImportManager:
 
     """
-    This class imports tweets from txt files to MySQL database
+    This class imports handles importing tweets to the database from various sources such as text files
     """
 
     __file_path = None
@@ -34,7 +34,7 @@ class ImportManager:
     def run(self):
         """
         Runs all necessary methods to import tweets for a year
-        :return:
+        :return: void
         """
 
         # getting tweets with their classes

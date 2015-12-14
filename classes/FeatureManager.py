@@ -93,7 +93,7 @@ class FeatureManager:
         """
         Formats given n-grams and arff data compatible with arff library
         :param ngrams: list, ngrams
-        :param arff_data:
+        :param arff_data: list
         :return: dict
         """
 
