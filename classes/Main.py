@@ -121,7 +121,7 @@ class Main:
         print("Cumulating all the experiments' scores.")
         final_results_from_all_experiments = self.__helper.cumulate_years_scores(experiments_results)
         print(final_results_from_all_experiments)
-
+        return final_results_from_all_experiments
 
     def plot_experiment_results(self, root_dir):
         """
@@ -131,6 +131,14 @@ class Main:
         """
         lines_scores = self.__helper.get_accuracy_scores_for_experiment_years_from_root_dir(root_dir)
         self.__plot_manager.plot_experiments_results(lines_scores)
+
+    def plot_all_experiment_results_with_scikit_learn(self, all_line_scores_of_all_experiments):
+        """
+        Plots all line scores of all experiments
+        :param all_line_scores_of_all_experiments: dict
+        :return: void
+        """
+        self.__plot_manager.plot_experiments_results_with_scikit_learn(all_line_scores_of_all_experiments)
 
     def plot_years_scores(self, root_dir):
         """
@@ -193,5 +201,5 @@ class Main:
 
         for year in self.years:
             years_features_counts[year] = self.find_frequency_dictionary_for_year(year)
-
+            
         self.__plot_manager.plot_years_intersection_scores(years_features_counts)

@@ -6,13 +6,19 @@ from random import randint
 
 from scipy import *
 from scipy import sparse
-from sklearn.svm import SVC
+
 from sklearn.metrics import *
 from sklearn import preprocessing
 from sklearn.utils import shuffle
 from sklearn.datasets import load_iris
 from sklearn.feature_extraction.text import CountVectorizer
+
+from sklearn import tree
+from sklearn.svm import SVC
+from sklearn.neighbors import NearestNeighbors
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.ensemble import RandomForestClassifier
+
 
 class ExperimentManager:
     """
@@ -114,6 +120,7 @@ class ExperimentManager:
 
     def _split_dataset_to_years(self, X, X_sparse, y):
         """
+
         :param X:
         :return:
         """
@@ -134,6 +141,7 @@ class ExperimentManager:
 
     def _shuffle_years(self, years_X, years_X_sparse, years_y):
         """
+
         :param years_X:
         :param years_y:
         :return:
@@ -148,6 +156,7 @@ class ExperimentManager:
 
     def _create_years_partitions(self, years_X, years_y):
         """
+
         :param arff_data_for_years:
         :return:
         """
@@ -158,6 +167,7 @@ class ExperimentManager:
 
             splitted_X[year_X] = {}
             splitted_y[year_y] = {}
+
             if not year_X in TEST_YEARS and not year_y in TEST_YEARS:
                 splitted_X[year_X]['500'] = year_X_data
                 splitted_y[year_y]['500'] = year_y_data
@@ -176,7 +186,7 @@ class ExperimentManager:
 
         for test_year in TEST_YEARS:
 
-            for j in range(0,10):
+            for j in range(0,LINE2_RANDOM_ITERATION_NUMBER):
                 random_X_set = []
                 random_y_set = []
 
@@ -195,6 +205,7 @@ class ExperimentManager:
 
     def _go_over_lines_setups(self, years_X_sparse, years_y):
         """
+
         :param years_X_sparse:
         :param years_y:
         :return:
@@ -242,7 +253,6 @@ class ExperimentManager:
                     prob_test_year, prob_test_count = prob_test_setup[0], prob_test_setup[1]
 
                     prob_X_train = years_X_sparse[prob_train_year][prob_train_count]
-
                     prob_y_train = years_y[prob_train_year][prob_train_count]
 
                     prob_X_test = years_X_sparse[prob_test_year][prob_test_count]
@@ -281,12 +291,9 @@ class ExperimentManager:
                     self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
 
 
-
-
-
-
     def _create_train_and_test_sets_from_setup_dict(self, years_X_sparse, years_y, train_setup, test_setup, line_name, iteration_number):
         """
+
         :param years_X_sparse:
         :param years_y:
         :return:
@@ -307,7 +314,7 @@ class ExperimentManager:
 
             new_x_train = years_X_sparse[train_set_year][tweet_to_take_from_train_year]
 
-            if line_name == "line2" and isinstance(new_x_train, list) and len(new_x_train)==10:
+            if line_name == "line2" and isinstance(new_x_train, list) and len(new_x_train)==LINE2_RANDOM_ITERATION_NUMBER:
                 new_x_train = new_x_train[iteration_number]
 
             new_x_train_dense = new_x_train.toarray().tolist()
@@ -315,7 +322,7 @@ class ExperimentManager:
 
             new_y_train = years_y[train_set_year][tweet_to_take_from_train_year]
 
-            if line_name == "line2" and isinstance(y_train, list) and len(new_y_train)==10:
+            if line_name == "line2" and isinstance(y_train, list) and len(new_y_train)==LINE2_RANDOM_ITERATION_NUMBER:
                 y_train += new_y_train[iteration_number]
             else:
                 y_train += new_y_train
@@ -342,6 +349,7 @@ class ExperimentManager:
 
     def _classify(self, X_train, X_test, y_train, y_test):
         """
+
         :param X_train:
         :param X_test:
         :param y_train:
@@ -362,7 +370,7 @@ class ExperimentManager:
 
         # Getting accuracy score
         acc_score = accuracy_score(y_test, predictions)
-        acc_score = round(acc_score, 2)
+        #acc_score = round(acc_score, 2)
 
         return acc_score
 
@@ -391,9 +399,9 @@ class ExperimentManager:
         # Iterating over line2's scores
         for train_test_set, scores_list in self.__all_scores['line2'].iteritems():
 
-            min_ = round(np.min(scores_list), 2)
-            mean_= round(np.mean(scores_list), 2)
-            max_ = round(np.max(scores_list), 2)
+            min_ = np.min(scores_list)
+            mean_= np.mean(scores_list)
+            max_ = np.max(scores_list)
 
             min_mean_max = []
 
@@ -415,6 +423,7 @@ class ExperimentManager:
         classifier = self._get_new_classifier()
 
         # Fitting
+        y_train = self.__label_encoder.transform(y_train)
         classifier.fit(X_train, y_train)
 
         # Getting probabilities
@@ -429,6 +438,8 @@ class ExperimentManager:
         """
         classifier = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
         classifier = OneVsRestClassifier(classifier)
+        #classifier = RandomForestClassifier(n_estimators=100)
+
         return classifier
 
     def _get_sample_indexes_closest_to_decision_boundary(self, samples_probabilities):
