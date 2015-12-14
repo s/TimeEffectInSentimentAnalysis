@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-
+import sys
 import numpy as np
 from config import *
-from random import randint
 
+from random import randint
 from DBManager import DBManager
 from PlotManager import PlotManager
 from ImportManager import ImportManager
 from FeatureManager import FeatureManager
 from ExperimentManager import ExperimentManager
+from PreprocessManager import PreprocessManager
 
 from helpers.GeneralHelpers import GeneralHelpers
 
@@ -70,6 +71,66 @@ class Main:
         self.__helper.generate_arff_file(arff_file_path, file_name, formatted_arff_data)
 
         print("Arff file generated at path:"+arff_file_path+file_name)
+
+    def run_experiment_with_scikit_learn(self, n=1, analyzer='word'):
+        """
+        Makes necessary method calls to run the experiment on scikit learn.
+        :param n: int, count n in n-gram
+        :param analyzer: string, either 'word' or 'char'
+        :return: void
+        """
+
+        # Retrieving all tweets from database
+        print("Retrieving all tweets from database.")
+        tweets_for_all_years = {}
+        # Iterating over all years
+        for year in self.years:
+            # Retrieving tweets for the year
+            tweets_for_year = self.__db_manager.get_tweets_for_year(year)
+            tweets_for_all_years[year] = tweets_for_year
+
+        # Creating a big list of tweets
+        print("Creating a big list of tweets.")
+        all_tweets = []
+        # Appending all tweets together
+        for year, tweets in tweets_for_all_years.iteritems():
+            all_tweets += tweets
+
+        # Generating document
+        print("Generating document and classes by preprocessing")
+        # Preprocessing and generation of document
+        document, classes = self.__feature_manager.create_document_and_classes_for_tweets(all_tweets, True)
+
+        # Getting years' tweets counts
+        print("Getting years' tweets counts.")
+        years_tweets_counts = {}
+        for year in self.years:
+            years_tweets_counts[year] = len(tweets_for_all_years[year])
+
+
+        experiments_results = []
+
+        experiment_manager = ExperimentManager(years_tweets_counts, n, analyzer)
+        print("Running experiments.")
+        for i in range(0, N_EXPERIMENTS):
+            print("Experiment:"+str(i))
+            all_scores_for_the_experiment = experiment_manager.run_experiment(document, classes)
+            experiments_results.append(all_scores_for_the_experiment)
+            print("-"*20)
+
+        print("Cumulating all the experiments' scores.")
+        final_results_from_all_experiments = self.__helper.cumulate_years_scores(experiments_results)
+        print(final_results_from_all_experiments)
+
+
+    def plot_experiment_results(self, root_dir):
+        """
+        Plots experiment's results from log files
+        :param root_dir: string
+        :return: void
+        """
+        lines_scores = self.__helper.get_accuracy_scores_for_experiment_years_from_root_dir(root_dir)
+        self.__plot_manager.plot_experiments_results(lines_scores)
 
     def plot_years_scores(self, root_dir):
         """
@@ -134,44 +195,3 @@ class Main:
             years_features_counts[year] = self.find_frequency_dictionary_for_year(year)
 
         self.__plot_manager.plot_years_intersection_scores(years_features_counts)
-
-    def run_experiment_with_scikit_learn(self, n=1, analyzer='word'):
-        """
-        Makes necessary method calls to run the experiment on scikit learn.
-        :param n: int, count n in n-gram
-        :param analyzer: string, either 'word' or 'char'
-        :return: void
-        """
-        # Retrieving all tweets from database
-        print("Retrieving all tweets from database.")
-        tweets_for_all_years = {}
-        # Iterating over all years
-        for year in self.years:
-            # Retrieving tweets for the year
-            tweets_for_year = self.__db_manager.get_tweets_for_year(year)
-            tweets_for_all_years[year] = tweets_for_year
-
-        # Creating a big list of tweets
-        print("Creating a big list of tweets.")
-        all_tweets = []
-        # Appending all tweets together
-        for year, tweets in tweets_for_all_years.iteritems():
-            all_tweets += tweets
-
-        # Generating document
-        print("Generating document and classes by preprocessing")
-        # Preprocessing and generation of document
-        document, classes = self.__feature_manager.create_document_and_classes_for_tweets(all_tweets, True)
-
-        # Getting years' tweets counts
-        print("Getting years' tweets counts.")
-        years_tweets_counts = {}
-        for year in self.years:
-            years_tweets_counts[year] = len(tweets_for_all_years[year])
-
-        experiment_manager = ExperimentManager(years_tweets_counts, n, analyzer)
-        print("Running experiments.")
-        for i in range(0, N_EXPERIMENTS):
-            print("Experiment:"+str(i))
-            experiment_manager.run_experiment(document, classes)
-            print("-"*20)

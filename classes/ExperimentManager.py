@@ -16,7 +16,7 @@ from sklearn.multiclass import OneVsRestClassifier
 
 class ExperimentManager:
     """
-
+    This class run an experiment
     """
     def __init__(self, years_tweets_counts, n=1, analyzer='word'):
         self.__n = n
@@ -29,17 +29,17 @@ class ExperimentManager:
 
     def run_experiment(self, document, classes):
         """
-
-        :param document:
-        :param classes:
-        :return:
+        Main method for using resources and making method calls in order.
+        :param document: list
+        :param classes: list
+        :return: dict
         """
         # Fitting document
         X_sparse, features = self._fit_document(document)
 
         self.__feature_count = len(features)
         self.__features = features
-        print("Feature count:"+str(self.__feature_count))
+        print("Total feature count:"+str(self.__feature_count))
 
         # Getting in ndarray format
         X = X_sparse.toarray()
@@ -55,14 +55,57 @@ class ExperimentManager:
 
         # Iterating over lines' setups dict
         self._go_over_lines_setups(partitioned_X_sparse, partitioned_y)
+        """
+        Example self.__all_scores by now:
+        {
+            'line4': {
+                '2013_200+2012_500/2013_300': 0.61,
+                '2014_200+2012_500/2014_300': 0.53,
+                '2015_200+2012_500/2015_300': 0.51
+            },
+            'line2': {
+                '2013_50+2012_500/2013_300': [0.59, 0.59, 0.6, 0.57, 0.6, 0.57, 0.59, 0.58, 0.6, 0.6],
+                '2015_50+2012_500/2015_300': [0.51, 0.52, 0.49, 0.5, 0.49, 0.5, 0.51, 0.5, 0.52, 0.5],
+                '2014_50+2012_500/2014_300': [0.51, 0.52, 0.52, 0.5, 0.5, 0.5, 0.51, 0.52, 0.51, 0.51]
+            },
+            'line1': {
+                '2012_500/2014_300': 0.51,
+                '2012_500/2015_300': 0.5,
+                '2012_500/2013_300': 0.59
+            }
+        }
+        """
 
 
+        # Now let's cumulate line2's scores
+        self._cumulate_scores_of_line2()
+        """
+        Example self.__all_scores by now:
+        {
+            'line4': {
+                '2013_200+2012_500/2013_300': 0.65,
+                '2014_200+2012_500/2014_300': 0.53,
+                '2015_200+2012_500/2015_300': 0.62
+            },
+            'line2': {
+                '2013_50+2012_500/2013_300': [0.6, 0.61, 0.63],
+                '2014_50+2012_500/2014_300': [0.48, 0.5, 0.51],
+                '2015_50+2012_500/2015_300': [0.6, 0.61, 0.63],
+            },
+            'line1': {
+                '2012_500/2013_300': 0.6
+                '2012_500/2014_300': 0.49,
+                '2012_500/2015_300': 0.61,
+            }
+        }
+        """
+        return self.__all_scores
 
     def _fit_document(self, document):
         """
-
-        :param document:
-        :return:
+        Fits document and generates n-grams and features
+        :param document: list
+        :return: csr_matrix, list
         """
         vectorizer = CountVectorizer(ngram_range=(self.__n, self.__n), analyzer=self.__analyzer)
         X = vectorizer.fit_transform(document)
@@ -71,7 +114,6 @@ class ExperimentManager:
 
     def _split_dataset_to_years(self, X, X_sparse, y):
         """
-
         :param X:
         :return:
         """
@@ -90,9 +132,22 @@ class ExperimentManager:
 
         return years_X, years_X_sparse, years_y
 
+    def _shuffle_years(self, years_X, years_X_sparse, years_y):
+        """
+        :param years_X:
+        :param years_y:
+        :return:
+        """
+        for year_name, year_data in years_X_sparse.iteritems():
+            normal = years_X[year_name]
+            sparse = years_X_sparse[year_name]
+            labels = years_y[year_name]
+            years_X[year_name], years_X_sparse[year_name], years_y[year_name] = shuffle(normal, sparse, labels)
+
+        return years_X, years_X_sparse, years_y
+
     def _create_years_partitions(self, years_X, years_y):
         """
-
         :param arff_data_for_years:
         :return:
         """
@@ -138,24 +193,8 @@ class ExperimentManager:
 
         return splitted_X, splitted_y
 
-    def _shuffle_years(self, years_X, years_X_sparse, years_y):
-        """
-
-        :param years_X:
-        :param years_y:
-        :return:
-        """
-        for year_name, year_data in years_X_sparse.iteritems():
-            normal = years_X[year_name]
-            sparse = years_X_sparse[year_name]
-            labels = years_y[year_name]
-            years_X[year_name], years_X_sparse[year_name], years_y[year_name] = shuffle(normal, sparse, labels)
-
-        return years_X, years_X_sparse, years_y
-
     def _go_over_lines_setups(self, years_X_sparse, years_y):
         """
-
         :param years_X_sparse:
         :param years_y:
         :return:
@@ -163,55 +202,95 @@ class ExperimentManager:
 
         # Iterating over lines
         for line_name, line_value in LINES_SETUPS.iteritems():
+            print(line_name)
+            self.__all_scores[line_name] = {}
 
-            if line_name == "line1" or line_name == "line4":
+            # Itearating over each setup( say 500-2012, 200-2013 / 300-2013)
+            for iteration_index, (train_set_setup, test_set_setup) in enumerate(zip(line_value['train'],
+                                                                                    line_value['test'])):
 
-                # Itearating over each setup( say 500-2012, 200-2013 / 300-2013)
-                print(line_name)
-                for iteration_index, (train_set_setup, test_set_setup) in enumerate(zip(line_value['train'],
-                                                                                        line_value['test'])):
+                if line_name == "line1" or line_name == "line4":
 
                     X_train, X_test, y_train, y_test, train_set_name, test_set_name = \
-                        self._create_train_and_test_sets_from_setup_dict(years_X_sparse, years_y, train_set_setup, test_set_setup, line_name, -1)
+                            self._create_train_and_test_sets_from_setup_dict(years_X_sparse, years_y, train_set_setup, test_set_setup, line_name, -1)
 
-                    acc_score, probabilities = self._classify(X_train, X_test, y_train, y_test)
+                    acc_score = self._classify(X_train, X_test, y_train, y_test)
                     print(train_set_name, test_set_name, acc_score)
+                    self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
 
-            elif line_name == "line2":
+                elif line_name == "line2":
 
-                print(line_name)
-                for setup_iteration_index, (train_set_setup, test_set_setup) in enumerate(zip(line_value['train'],
-                                                                                              line_value['test'])):
                     for random_50_iteration_index in range(0, LINE2_RANDOM_ITERATION_NUMBER):
 
                         X_train, X_test, y_train, y_test, train_set_name, test_set_name = \
                         self._create_train_and_test_sets_from_setup_dict(years_X_sparse, years_y, train_set_setup, test_set_setup, line_name, random_50_iteration_index)
 
-                        acc_score, probabilities = self._classify(X_train, X_test, y_train, y_test)
+                        acc_score = self._classify(X_train, X_test, y_train, y_test)
                         print(train_set_name, test_set_name, acc_score)
+                        self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
+
+                elif line_name == "line3":
+
+                    # Creating train and test sets
+                    prob_y_train = None
+
+                    probability_setup = LINE3_PROB_SETUP[iteration_index]
+                    prob_train_setup = probability_setup['train']
+                    prob_test_setup = probability_setup['test']
+
+                    prob_train_year, prob_train_count = prob_train_setup[0], prob_train_setup[1]
+                    prob_test_year, prob_test_count = prob_test_setup[0], prob_test_setup[1]
+
+                    prob_X_train = years_X_sparse[prob_train_year][prob_train_count]
+
+                    prob_y_train = years_y[prob_train_year][prob_train_count]
+
+                    prob_X_test = years_X_sparse[prob_test_year][prob_test_count]
+                    prob_y_test = np.array(years_y[prob_test_year][prob_test_count])
+
+
+                    probabilities = self._predict_probabilities(prob_X_train, prob_X_test, prob_y_train)
+                    indexes_of_samples_closest_to_decision_boundary = self._get_sample_indexes_closest_to_decision_boundary(probabilities)
+
+                    samples_closest_to_decision_boundary_X = prob_X_test[indexes_of_samples_closest_to_decision_boundary]
+                    samples_closest_to_decision_boundary_y = prob_y_test[indexes_of_samples_closest_to_decision_boundary]
+
+                    final_X_train = prob_X_train.toarray().tolist()
+                    final_X_train += samples_closest_to_decision_boundary_X.toarray().tolist()
+
+                    final_sparse_X_train = sparse.csr_matrix(final_X_train)
+
+                    final_y_train = []
+                    final_y_train = prob_y_train[:]
+                    final_y_train += samples_closest_to_decision_boundary_y.tolist()
+
+                    final_X_test_year = test_set_setup.keys()[0] #2013
+                    final_X_test_tweet_count = test_set_setup[final_X_test_year] #300
+
+                    final_X_test = years_X_sparse[final_X_test_year][final_X_test_tweet_count]
+                    final_y_test = years_y[final_X_test_year][final_X_test_tweet_count]
+
+                    acc_score = self._classify(final_sparse_X_train, final_X_test, final_y_train, final_y_test)
+
+
+
+                    train_set_name = prob_train_year + "_" + prob_train_count + "+" + prob_test_year + "_" + str(MOST_DISTINCT_SAMPLE_SIZE)
+                    test_set_name = final_X_test_year + "_" + final_X_test_tweet_count
+
+                    print(train_set_name, test_set_name, acc_score)
+                    self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
+
+
+
+
 
 
     def _create_train_and_test_sets_from_setup_dict(self, years_X_sparse, years_y, train_setup, test_setup, line_name, iteration_number):
         """
-
         :param years_X_sparse:
         :param years_y:
         :return:
         """
-        # Old code
-        # X_train_flag = 0
-        # X_test_flag = 0
-        #
-        # if X_train_flag == 0:
-        #     X_train = new_x_train
-        #     X_train_flag = 1
-        # else:
-        #     X_train = sparse.vstack((new_x_train, X_train))
-        # if X_test_flag == 0:
-        #     X_test = new_x_test
-        #     X_test_flag = 1
-        # else:
-        #     X_test = sparse.vstack((new_x_test, X_test))
 
         X_train = []
         y_train = []
@@ -222,35 +301,28 @@ class ExperimentManager:
         train_set_name = ""
         test_set_name = ""
 
+        # Train setup and test setup may have different number of elements so we can't zip() and iterate simultaniously
+
         for train_set_year, tweet_to_take_from_train_year in train_setup.iteritems():
 
-            if NOT_INCLUDE_YEARS_TWEETS == tweet_to_take_from_train_year:
-                pass
+            new_x_train = years_X_sparse[train_set_year][tweet_to_take_from_train_year]
 
-            elif MOST_DISTINCT == tweet_to_take_from_train_year:
-                pass
+            if line_name == "line2" and isinstance(new_x_train, list) and len(new_x_train)==10:
+                new_x_train = new_x_train[iteration_number]
 
+            new_x_train_dense = new_x_train.toarray().tolist()
+            X_train += new_x_train_dense
+
+            new_y_train = years_y[train_set_year][tweet_to_take_from_train_year]
+
+            if line_name == "line2" and isinstance(y_train, list) and len(new_y_train)==10:
+                y_train += new_y_train[iteration_number]
             else:
-                new_x_train = years_X_sparse[train_set_year][tweet_to_take_from_train_year]
+                y_train += new_y_train
 
-                if line_name == "line2" and isinstance(new_x_train, list) and len(new_x_train)==10:
-                    new_x_train = new_x_train[iteration_number]
-
-                new_x_train_dense = new_x_train.toarray().tolist()
-                X_train += new_x_train_dense
-
-                new_y_train = years_y[train_set_year][tweet_to_take_from_train_year]
-
-                if line_name == "line2" and isinstance(y_train, list) and len(new_y_train)==10:
-                    y_train += new_y_train[iteration_number]
-                else:
-                    y_train += new_y_train
-
-                train_set_name += train_set_year + '_' + tweet_to_take_from_train_year + '+'
+            train_set_name += train_set_year + '_' + tweet_to_take_from_train_year + '+'
 
         X_train_sparse = sparse.csr_matrix(X_train)
-
-
         train_set_name = train_set_name.rstrip('+')
 
         for test_set_year, tweet_to_take_from_test_year in test_setup.iteritems():
@@ -268,10 +340,8 @@ class ExperimentManager:
 
         return X_train_sparse, sparse_X_test, y_train, y_test, train_set_name, test_set_name
 
-
     def _classify(self, X_train, X_test, y_train, y_test):
         """
-
         :param X_train:
         :param X_test:
         :param y_train:
@@ -279,8 +349,7 @@ class ExperimentManager:
         :return:
         """
         # Creating SVM instance
-        classifier = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007, tol=0.001, shrinking=False)
-        classifier = OneVsRestClassifier(classifier)
+        classifier = self._get_new_classifier()
 
         y_train = self.__label_encoder.transform(y_train)
         y_test  = self.__label_encoder.transform(y_test)
@@ -291,10 +360,93 @@ class ExperimentManager:
         # Predicting
         predictions = classifier.predict(X_test)
 
-        # Getting each sample's class probabilities
-        probabilities = classifier.predict_proba(X_test)
-
         # Getting accuracy score
         acc_score = accuracy_score(y_test, predictions)
+        acc_score = round(acc_score, 2)
 
-        return acc_score, predictions
+        return acc_score
+
+    def _save_accuracy_score(self, line_name, train_set_name, test_set_name, score):
+        """
+        Saves given accuracy score to appropriate key
+        :param line_name: string
+        :param point_name: string
+        :param score: float
+        :return: void
+        """
+        score_dict_key = train_set_name + '/' + test_set_name
+
+        if line_name == "line2":
+            if not score_dict_key in self.__all_scores[line_name]:
+                self.__all_scores[line_name][score_dict_key] = []
+            self.__all_scores[line_name][score_dict_key].append(score)
+        else:
+            self.__all_scores[line_name][score_dict_key] = score
+
+    def _cumulate_scores_of_line2(self):
+        """
+        Cumulates line2's scores like [min, mean, max]
+        :return: void
+        """
+        # Iterating over line2's scores
+        for train_test_set, scores_list in self.__all_scores['line2'].iteritems():
+
+            min_ = round(np.min(scores_list), 2)
+            mean_= round(np.mean(scores_list), 2)
+            max_ = round(np.max(scores_list), 2)
+
+            min_mean_max = []
+
+            for m in (min_, mean_, max_):
+                min_mean_max.append(m)
+
+            self.__all_scores['line2'][train_test_set] = min_mean_max
+
+    def _predict_probabilities(self, X_train, X_test, y_train):
+        """
+        Returns probabilities of each sample in X_test
+        :param X_train:
+        :param X_test:
+        :param y_train:
+        :param y_test:
+        :return:
+        """
+        # Getting new model instance
+        classifier = self._get_new_classifier()
+
+        # Fitting
+        classifier.fit(X_train, y_train)
+
+        # Getting probabilities
+        probabilities = classifier.predict_proba(X_test)
+
+        return probabilities
+
+    def _get_new_classifier(self):
+        """
+        Returns new classifier instance
+        :return: OneVsRestClassifier
+        """
+        classifier = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
+        classifier = OneVsRestClassifier(classifier)
+        return classifier
+
+    def _get_sample_indexes_closest_to_decision_boundary(self, samples_probabilities):
+        """
+        Returns samples' indexes which are closest to decision boundary
+        :param samples: list
+        :return: list
+        """
+        standart_deviations = []
+        for one_samples_probabilities in samples_probabilities:
+
+            mean_of_samples_probabilities = np.std(one_samples_probabilities)
+            standart_deviations.append(mean_of_samples_probabilities)
+
+        # Finding elements which have minimum standart deviations
+        np_array = np.array(standart_deviations)
+        #print(standart_deviations)
+        indices_of_minimum_stds = np_array.argsort()[:MOST_DISTINCT_SAMPLE_SIZE]
+        # for indice in indices_of_minimum_stds:
+        #     print(samples_probabilities[indice])
+        return indices_of_minimum_stds

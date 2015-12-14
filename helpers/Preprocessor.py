@@ -97,4 +97,3 @@ class Preprocessor:
 
     def string_contains_digits(self, string):
         return bool(self.compiledDigitRegex.search(string))
-

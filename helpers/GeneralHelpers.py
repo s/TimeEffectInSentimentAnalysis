@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import os
 import re
 import arff
 import json
 import codecs
 import random
-import pprint
+import datetime
 import numpy as np
 import collections
 
@@ -78,7 +79,7 @@ class GeneralHelpers:
         :param suggestions_cache: dict, suggestions
         :return: void
         """
-        suggestion_cache_file_path = self.__dictionaries_directory + MODEL_NAME + '/' + SUGGESTION_CACHE_FILE_NAME
+        suggestion_cache_file_path = self.__dictionaries_directory + SUGGESTION_CACHE_FILE_NAME
         self._write_json_to_file(suggestions_cache, suggestion_cache_file_path)
 
     def save_changes_in_root_cache(self, roots_cache):
@@ -87,7 +88,7 @@ class GeneralHelpers:
         :param roots_cache: roots_cache, dict, roots
         :return: void
         """
-        roots_file_path = self.__dictionaries_directory + MODEL_NAME + '/' + ROOTS_CACHE_FILE_NAME
+        roots_file_path = self.__dictionaries_directory + ROOTS_CACHE_FILE_NAME
         self._write_json_to_file(roots_cache, roots_file_path)
 
     def load_suggestion_cache(self):
@@ -146,37 +147,11 @@ class GeneralHelpers:
         final_file_name = file_name + '_' + random_file_appendix + extension
         return final_file_name
 
-    def _write_json_to_file(self, json_data, file_path):
-        """
-        Writes given data to given path
-        :param data: list or dict, json_data
-        :param file_path: string
-        :return:
-        """
-        with open(file_path, 'w') as outfile:
-            json.dump(json_data, outfile)
-
-    def _make_jar_call(self, jar_file_name, word):
-        """
-        Makes a jar call with proper parameters
-        :param jar_file_name: string, jar file to make call
-        :param word: string, parameter word
-        :return: string, connection output
-        """
-        jar_file_path = JAR_FILE_DIR_NAME + jar_file_name
-
-        # Making the call
-        process_call = Popen(['java', '-jar', jar_file_path, word], stdout=PIPE, stderr=STDOUT)
-
-        # Getting output
-        output = process_call.communicate()[0].decode('utf-8')
-        return output
-
     def get_accuracy_scores_for_years_from_root_dir(self, root_dir):
         """
-        Returns a dict of __years' classifier scores
+        Returns a dict of years' classifier scores
         :param root_dir: string, path to root directory
-        :return: dict, __years' classifier scores
+        :return: dict, years' classifier scores
         """
         years_scores = {}
 
@@ -208,6 +183,49 @@ class GeneralHelpers:
         sorted_years_scores = collections.OrderedDict(sorted(years_scores.items()))
 
         return sorted_years_scores
+
+    def get_accuracy_scores_for_experiment_years_from_root_dir(self, root_dir):
+        """
+        Returns a dict of scores
+        :param root_dir: string, path to root directory
+        :return: dict, years' classifier scores
+        """
+        lines_scores = {}
+
+        # Iterating over directories in root directory
+        for root, dirs, files in os.walk(root_dir):
+
+            experiment_scores = []
+            # Iterating over files in a directory
+            for file_name in files:
+
+                if file_name.endswith('.txt'):
+
+                    file_path = root + '/' + file_name
+
+                    with open(file_path, 'r') as classifier_log_file:
+                        file_content = classifier_log_file.read()
+                        accuracy_score_of_log_file = self.get_accuracy_score_from_log_file_content(file_content)
+                        experiment_scores.append(accuracy_score_of_log_file)
+
+            if len(experiment_scores):
+                mean_of_experiment_scores = round(np.array(experiment_scores).mean(), 2)
+                root_components = root.split("/")
+                line_name = root_components[-2]
+                point_name = root_components[-1]
+                point_name = LINES_DIR_DICT[point_name]
+
+                if not line_name in lines_scores:
+                    lines_scores[line_name] = {}
+
+                lines_scores[line_name][point_name] = mean_of_experiment_scores
+
+        for line, points in lines_scores.iteritems():
+            lines_scores[line] = collections.OrderedDict(sorted(points.items()))
+
+        lines_scores = collections.OrderedDict(sorted(lines_scores.items()))
+
+        return lines_scores
 
     def get_accuracy_score_from_log_file_content(self, log_file_content):
         """
@@ -331,4 +349,87 @@ class GeneralHelpers:
 
         return accuracy_scores
 
+    def find_key_of_given_value_in_dict(self, dictionary, value_to_search):
+        """
+        Returns key of given value
+        :param dictionary: dict
+        :param value_to_search: string
+        :return: string
+        """
+        for k, v in dictionary.iteritems():
+            if v == value_to_search:
+                return k
+        return -1
 
+    def find_most_distinct_n_samples(self, document_one, document_two, n_samples):
+        """
+        Returns most distinct n_samples from document_two comparing to document_one (documents are arff data)
+        :param document_one: list
+        :param document_two: list
+        :param n_samples: int
+        :return: list
+        """
+        pass
+
+    def cumulate_years_scores(self, years_scores):
+        """
+        Cumulates and finds averages of all years' scores
+        :param years_scores: list
+        :return: dict
+        """
+        final_result_of_all_experiments = {}
+        for one_experiments_scores in years_scores:
+
+            for line_name, one_lines_scores in one_experiments_scores.iteritems():
+
+                if not line_name in final_result_of_all_experiments:
+                    final_result_of_all_experiments[line_name] = {}
+
+                for setup_name, score_or_list in one_lines_scores.iteritems():
+
+                    if not setup_name in final_result_of_all_experiments[line_name]:
+                        final_result_of_all_experiments[line_name][setup_name] = []
+
+                    final_result_of_all_experiments[line_name][setup_name].append(score_or_list)
+
+        for line_name, one_lines_scores in final_result_of_all_experiments.iteritems():
+            if line_name != "line2":
+
+                for setup_name, scores_list in one_lines_scores.iteritems():
+                    final_result_of_all_experiments[line_name][setup_name] = round(np.mean(scores_list), 2)
+
+            else:
+
+                for setup_name, scores_list in one_lines_scores.iteritems():
+                    np_array_scores_list = np.array(scores_list)
+                    min_mean_max_mean = np.mean(scores_list, axis=0)
+                    final_result_of_all_experiments[line_name][setup_name] = min_mean_max_mean
+
+        return final_result_of_all_experiments
+
+
+    def _write_json_to_file(self, json_data, file_path):
+        """
+        Writes given data to given path
+        :param data: list or dict, json_data
+        :param file_path: string
+        :return:
+        """
+        with open(file_path, 'w') as outfile:
+            json.dump(json_data, outfile)
+
+    def _make_jar_call(self, jar_file_name, word):
+        """
+        Makes a jar call with proper parameters
+        :param jar_file_name: string, jar file to make call
+        :param word: string, parameter word
+        :return: string, connection output
+        """
+        jar_file_path = JAR_FILE_DIR_NAME + jar_file_name
+
+        # Making the call
+        process_call = Popen(['java', '-jar', jar_file_path, word], stdout=PIPE, stderr=STDOUT)
+
+        # Getting output
+        output = process_call.communicate()[0].decode('utf-8')
+        return output
