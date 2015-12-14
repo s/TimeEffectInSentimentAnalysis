@@ -5,23 +5,21 @@ import types
 import copy_reg
 import numpy as np
 from config import *
-from time import sleep
 from random import randint
 from multiprocessing import *
-
-
-
 
 from DBManager import DBManager
 from PlotManager import PlotManager
 from ImportManager import ImportManager
 from FeatureManager import FeatureManager
 from ExperimentManager import ExperimentManager
-from PreprocessManager import PreprocessManager
 
 from helpers.GeneralHelpers import GeneralHelpers
 
 class Main:
+    """
+    Main class, makes necessary function calls to necessary classes
+    """
 
     def __init__(self):
         self.__db_manager = DBManager()
@@ -87,7 +85,6 @@ class Main:
         :param analyzer: string, either 'word' or 'char'
         :return: void
         """
-
         # Retrieving all tweets from database
         print("Retrieving all tweets from database.")
         tweets_for_all_years = {}
@@ -115,7 +112,6 @@ class Main:
         for year in self.years:
             years_tweets_counts[year] = len(tweets_for_all_years[year])
 
-
         all_processes = []
         self.all_experiments_results = []
 
@@ -123,7 +119,6 @@ class Main:
         copy_reg.pickle(types.MethodType, self._reduce_method)
 
         print("Running experiments.")
-
         t0 = time.time()
         for i in range(0, N_EXPERIMENTS):
             print("Experiment:"+str(i))
@@ -144,7 +139,6 @@ class Main:
         print("Cumulating all the experiments' scores.")
         final_results_from_all_experiments = self.__helper.cumulate_years_scores(self.all_experiments_results)
         return final_results_from_all_experiments
-
 
     def _reduce_method(self, m):
         """

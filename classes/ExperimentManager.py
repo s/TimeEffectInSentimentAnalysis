@@ -1,3 +1,4 @@
+import traceback
 from config import *
 from random import randint
 
@@ -14,6 +15,7 @@ from sklearn.utils import shuffle
 from sklearn import preprocessing
 from sklearn.cluster import KMeans
 from sklearn.decomposition import TruncatedSVD
+
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer
@@ -50,84 +52,36 @@ class ExperimentManager:
         :param classes: list
         :return: dict
         """
-        # Fitting document
-        X_sparse, features = self._fit_document(document)
+        try:
+            # Fitting document
+            X_sparse, features = self._fit_document(document)
 
-        self.__feature_count = len(features)
-        self.__features = features
+            self.__feature_count = len(features)
+            self.__features = features
 
-        # Getting in ndarray format
-        X = X_sparse.toarray()
+            # Getting in ndarray format
+            X = X_sparse.toarray()
 
-        # Splitting document for years
-        years_X, years_X_sparse, years_y = self._split_dataset_to_years(X, X_sparse, classes)
+            # Splitting document for __years
+            years_X, years_X_sparse, years_y = self._split_dataset_to_years(X, X_sparse, classes)
 
-        # Shuffling them for the experiment
-        years_X, years_X_sparse, years_y = self._shuffle_years(years_X, years_X_sparse, years_y)
+            # Shuffling them for the experiment
+            years_X, years_X_sparse, years_y = self._shuffle_years(years_X, years_X_sparse, years_y)
 
-        # Creating 500, 300, 200 and 50 chunks of data
-        partitioned_X_sparse, partitioned_y = self._create_years_partitions(years_X_sparse, years_y)
+            # Creating 500, 300, 200 and 50 chunks of data
+            partitioned_X_sparse, partitioned_y = self._create_years_partitions(years_X_sparse, years_y)
 
-        # Iterating over lines' setups dict
-        self._go_over_lines_setups(partitioned_X_sparse, partitioned_y)
-        """
-        Example self.__all_scores by now:
-        {
-            'line4': {
-                '2013_200+2012_500/2013_300': 0.61,
-                '2014_200+2012_500/2014_300': 0.53,
-                '2015_200+2012_500/2015_300': 0.51
-            },
-            'line2': {
-                '2013_50+2012_500/2013_300': [0.59, 0.59, 0.6, 0.57, 0.6, 0.57, 0.59, 0.58, 0.6, 0.6],
-                '2015_50+2012_500/2015_300': [0.51, 0.52, 0.49, 0.5, 0.49, 0.5, 0.51, 0.5, 0.52, 0.5],
-                '2014_50+2012_500/2014_300': [0.51, 0.52, 0.52, 0.5, 0.5, 0.5, 0.51, 0.52, 0.51, 0.51]
-            },
-            'line1': {
-                '2012_500/2014_300': 0.51,
-                '2012_500/2015_300': 0.5,
-                '2012_500/2013_300': 0.59
-            }
-        }
-        """
+            # Iterating over lines' setups dict
+            self._go_over_lines_setups(partitioned_X_sparse, partitioned_y)
 
+            # Now let's cumulate line2's scores
+            self._cumulate_scores_of_line2()
 
-        # Now let's cumulate line2's scores
-        self._cumulate_scores_of_line2()
-        """
-        Example self.__all_scores by now:
-        self.__all_scores = {
-            'line4': {
-                '2013_200+2012_500/2013_300': 0.60999999999999999,
-                '2014_200+2012_500/2014_300': 0.51000000000000001,
-                '2015_200+2012_500/2015_300': 0.53000000000000003
-            },
-            'line3': {
-                'L1-2012_500+2015_50/2015_300': 0.5033333333333333,
-                'L1-2012_500+2014_50/2014_300': 0.5,
-                'L1-2012_500+2013_50/2013_300': 0.58666666666666667,
+        except Exception:
 
-                'L2-2012_500+2015_50/2015_300': 0.5033333333333333,
-                'L2-2012_500+2014_50/2014_300': 0.5,
-                'L2-2012_500+2013_50/2013_300': 0.58666666666666667,
+            print("Exception in experiment:#"+str(self.__experiment_number))
+            traceback.print_exc()
 
-                'L3-2012_500+2015_50/2015_300': 0.5033333333333333,
-                'L3-2012_500+2014_50/2014_300': 0.5,
-                'L3-2012_500+2013_50/2013_300': 0.58666666666666667
-
-            },
-            'line2': {
-                '2013_50+2012_500/2013_300': [0.56333333333333335, 0.58833333333333326, 0.60999999999999999],
-                '2015_50+2012_500/2015_300': [0.49666666666666665, 0.51533333333333342, 0.53000000000000003],
-                '2014_50+2012_500/2014_300': [0.48333333333333334, 0.49133333333333329, 0.5]
-            },
-            'line1': {
-                '2012_500/2014_300': 0.46333333333333332,
-                '2012_500/2015_300': 0.52000000000000002,
-                '2012_500/2013_300': 0.58333333333333337
-            }
-        }
-        """
         return self.__all_scores
 
     def _fit_document(self, document):
@@ -166,7 +120,7 @@ class ExperimentManager:
 
     def _shuffle_years(self, years_X, years_X_sparse, years_y):
         """
-        Shuffles years' tweets
+        Shuffles __years' tweets
         :param years_X: dense data
         :param years_X_sparse: scipy.sparse
         :param years_y: list
@@ -267,7 +221,6 @@ class ExperimentManager:
                         self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
 
                 elif line_name == "line3":
-
                     # Find train set and test set - preperation
                     probability_setup = LINE3_PROB_SETUP[iteration_index]
                     prob_train_setup = probability_setup['train']
@@ -293,7 +246,7 @@ class ExperimentManager:
 
 
                     # Active Learning Method - I
-                    samples_closest_to_decision_boundary_X, samples_closest_to_decision_boundary_y = \
+                    samples_closest_to_decision_boundary_X, samples_closest_to_decision_boundary_y, indexes_of_samples_closest_to_decision_boundary = \
                         self._choose_ale_samples_closest_to_decision_boundary(prob_X_train, prob_X_test, prob_y_train, prob_y_test)
 
                     acc_score_for_ale_one = self._combine_train_sets_and_run_classification(prob_X_train, final_X_test,
@@ -301,20 +254,43 @@ class ExperimentManager:
                                                                                             prob_y_train, final_y_test,
                                                                                             samples_closest_to_decision_boundary_y)
 
-                    train_set_name = "L1-" + train_set_name_appendix
-                    self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score_for_ale_one)
+                    train_set_name_one = "L0-" + train_set_name_appendix
+                    self._save_accuracy_score(line_name, train_set_name_one, test_set_name, acc_score_for_ale_one)
+
+                    if PLOT_DECISION_BOUNDARIES_FOR_LINE_3:
+                        # Plot decision boundary of probabilities with PCA
+                        plot_title = train_set_name_one + '/' + test_set_name
+                        self._plot_decision_boundary(prob_X_train, prob_X_test, prob_y_train, prob_y_test,
+                                                     indexes_of_samples_closest_to_decision_boundary, plot_title)
 
 
                     # Active Learning Method - II
-                    #train_set_name = "L2-" + train_set_name_appendix
-                    #self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
+                    samples_closest_to_cluster_centroids_org_X, samples_closest_to_cluster_centroids_org_y, indices_of_closest_samples_to_centroids = \
+                        self._choose_ale_samples_from_cluster_centroids_with_original_features(prob_X_test, prob_y_test)
+
+                    acc_score_for_ale_two = self._combine_train_sets_and_run_classification(prob_X_train, final_X_test,
+                                                                                            samples_closest_to_cluster_centroids_org_X,
+                                                                                            prob_y_train, final_y_test,
+                                                                                            samples_closest_to_cluster_centroids_org_y)
+
+                    train_set_name_two = "L1-" + train_set_name_appendix
+                    self._save_accuracy_score(line_name, train_set_name_two, test_set_name, acc_score_for_ale_two)
 
 
                     # Active Learning Method - III
-                    #train_set_name = "L3-" + train_set_name_appendix
-                    #self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
+                    probabilities = self._predict_probabilities(prob_X_train, prob_X_test, prob_y_train)
 
+                    samples_closest_to_cluster_centroids_cmb_X, samples_closest_to_cluster_centroids_cmb_y, indices_of_closest_samples_to_centroids = \
+                        self._choose_ale_samples_from_cluster_centroids_with_combined_features(probabilities, prob_X_test, prob_y_test)
 
+                    acc_score_for_ale_three = self._combine_train_sets_and_run_classification(prob_X_train, final_X_test,
+                                                                                            samples_closest_to_cluster_centroids_cmb_X,
+                                                                                            prob_y_train, final_y_test,
+                                                                                            samples_closest_to_cluster_centroids_cmb_y)
+
+                    train_set_name_three = "L2-" + train_set_name_appendix
+                    self._save_accuracy_score(line_name, train_set_name_three, test_set_name, acc_score_for_ale_three)
+                    
 
     def _create_train_and_test_sets_from_setup_dict(self, years_X_sparse, years_y, train_setup, test_setup, line_name, iteration_number):
         """
@@ -386,7 +362,7 @@ class ExperimentManager:
         :return: float
         """
         # Creating SVM instance
-        classifier = self._get_new_model_for_general_purpose()
+        classifier = self._get_new_model_for_classification()
 
         y_train = self.__label_encoder.transform(y_train)
         y_test  = self.__label_encoder.transform(y_test)
@@ -441,7 +417,6 @@ class ExperimentManager:
 
             self.__all_scores['line2'][train_test_set] = min_mean_max
 
-
     def _predict_probabilities(self, X_train, X_test, y_train):
         """
         This method calculates the probabilities of test set samples belogning each sentiment class using a model.
@@ -453,7 +428,7 @@ class ExperimentManager:
         :return: list
         """
         # Getting new model instance
-        classifier = self._get_new_model_for_logical_selection()
+        classifier = self._get_new_model_for_logical_selection_with_classification()
 
         # Fitting
         classifier.fit(X_train, y_train)
@@ -463,27 +438,36 @@ class ExperimentManager:
 
         return probabilities
 
-    def _get_new_model_for_general_purpose(self):
+    def _get_new_model_for_classification(self):
         """
         Returns new classifier instance
         :return: OneVsRestClassifier
         """
-        # model_for_general_purpose = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
-        # model_for_general_purpose = OneVsRestClassifier(model_for_general_purpose)
-        model_for_general_purpose = RandomForestClassifier(n_estimators=100)
+        #model_for_classification = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
+        #model_for_classification = OneVsRestClassifier(model_for_classification)
+        model_for_classification = RandomForestClassifier(n_estimators=100)
 
-        return model_for_general_purpose
+        return model_for_classification
 
-    def _get_new_model_for_logical_selection(self):
+    def _get_new_model_for_logical_selection_with_classification(self):
         """
         Returns new classifier instance for logical selection
         :return:
         """
-        # model_for_logical_selection = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
-        # model_for_logical_selection = OneVsRestClassifier(model_for_logical_selection)
-        model_for_logical_selection = RandomForestClassifier(n_estimators=100)
+        #model_for_logical_selection_with_classification = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
+        #model_for_logical_selection_with_classification = OneVsRestClassifier(model_for_logical_selection_with_classification)
+        model_for_logical_selection_with_classification = RandomForestClassifier(n_estimators=100)
 
-        return model_for_logical_selection
+        return model_for_logical_selection_with_classification
+
+    def _get_new_model_for_logical_selection_with_clustering(self):
+        """
+
+        :return:
+        """
+        model_for_logical_selection_with_clustering = KMeans(n_clusters = MOST_DISTINCT_SAMPLE_SIZE)
+
+        return model_for_logical_selection_with_clustering
 
     def _get_sample_indexes_closest_to_decision_boundary(self, samples_probabilities):
         """
@@ -491,14 +475,8 @@ class ExperimentManager:
         :param samples: list
         :return: list
         """
-        standart_deviations = []
-        for one_samples_probabilities in samples_probabilities:
-
-            mean_of_samples_probabilities = np.std(one_samples_probabilities)
-            standart_deviations.append(mean_of_samples_probabilities)
-
         # Finding elements which have minimum standart deviations
-        np_array = np.array(standart_deviations)
+        np_array = self._find_standart_deviations_of_samples_probabilities(samples_probabilities)
 
         indices_of_minimum_stds = np_array.argsort()[:MOST_DISTINCT_SAMPLE_SIZE]
         # for indice in indices_of_minimum_stds:
@@ -518,7 +496,7 @@ class ExperimentManager:
         """
 
         # Creating classifiers
-        classifier = self._get_new_model_for_general_purpose()
+        classifier = self._get_new_model_for_classification()
         svd = TruncatedSVD(n_components=2)
 
         # Encoding labeles to float
@@ -599,21 +577,44 @@ class ExperimentManager:
         samples_closest_to_decision_boundary_X = prob_X_test[indexes_of_samples_closest_to_decision_boundary]
         samples_closest_to_decision_boundary_y = prob_y_test[indexes_of_samples_closest_to_decision_boundary]
 
-        return samples_closest_to_decision_boundary_X, samples_closest_to_decision_boundary_y
+        return samples_closest_to_decision_boundary_X, samples_closest_to_decision_boundary_y, indexes_of_samples_closest_to_decision_boundary
 
-    def _ale_by_clustering_samples_with_original_features(self):
+    def _choose_ale_samples_from_cluster_centroids_with_original_features(self, prob_X_test, prob_y_test):
         """
-        3244
         :return:
         """
-        pass
+        indices_of_closest_samples_to_centroids = []
+        clustering_model = self._get_new_model_for_logical_selection_with_clustering()
+        clustering_model.fit(prob_X_test)
+        distances_matrix = clustering_model.transform(prob_X_test)
 
-    def _ale_by_clustering_samples_with_combined_features(self):
+        indices_of_closest_samples_to_centroids = np.argmin(distances_matrix, axis=0)
+
+        samples_closest_to_centroids_X = prob_X_test[indices_of_closest_samples_to_centroids]
+        samples_closest_to_centroids_y = prob_y_test[indices_of_closest_samples_to_centroids]
+
+        return  samples_closest_to_centroids_X, samples_closest_to_centroids_y, indices_of_closest_samples_to_centroids
+
+    def _choose_ale_samples_from_cluster_centroids_with_combined_features(self, probabilities, prob_X_test, prob_y_test):
         """
-        sinif olasiliklarini kullanarak
         :return:
         """
-        pass
+        N_SAMPLES_WITH_MINIMUM_STDS_TO_CLUSTER = 100
+
+        standart_deviations = self._find_standart_deviations_of_samples_probabilities(probabilities)
+        indices_of_minimum_stds = standart_deviations.argsort()[:N_SAMPLES_WITH_MINIMUM_STDS_TO_CLUSTER]
+
+        clustering_model = self._get_new_model_for_logical_selection_with_clustering()
+        clustering_model.fit(probabilities)
+        distances_matrix = clustering_model.transform(probabilities)
+
+        indices_of_closest_samples_to_centroids = np.argmin(distances_matrix, axis=0)
+
+        samples_closest_to_centroids_X = prob_X_test[indices_of_closest_samples_to_centroids]
+        samples_closest_to_centroids_y = prob_y_test[indices_of_closest_samples_to_centroids]
+
+        return  samples_closest_to_centroids_X, samples_closest_to_centroids_y, indices_of_closest_samples_to_centroids
+
 
     def _combine_train_sets_and_run_classification(self, base_train_X, base_test_X, new_train_X, base_train_y, base_test_y, new_train_y):
         """
@@ -633,3 +634,21 @@ class ExperimentManager:
         acc_score = self._classify(final_sparse_X_train, base_test_X, final_y_train, base_test_y)
 
         return acc_score
+
+    def _find_standart_deviations_of_samples_probabilities(self, probabilities):
+        """
+
+        :param probabilities:
+        :return:
+        """
+
+        standart_deviations = []
+        for one_samples_probabilities in probabilities:
+
+            mean_of_samples_probabilities = np.std(one_samples_probabilities)
+            standart_deviations.append(mean_of_samples_probabilities)
+
+        # Finding elements which have minimum standart deviations
+        np_array = np.array(standart_deviations)
+
+        return np_array

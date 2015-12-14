@@ -11,12 +11,12 @@ from helpers.GeneralHelpers import GeneralHelpers
 
 class PlotManager:
     """
-        This class does the necessary works for visualizing data
+    This class does the necessary works for visualizing data
     """
     def __init__(self):
         self.first_year = 2012
         self.__helper = GeneralHelpers()
-        self.colors = ['r', 'b', 'y', 'g', 'm', 'c']
+        self.colors = ['r', 'b', 'y', 'm', 'k', 'c', 'g']
         self.years = ('2012', '2013', '2014', '2015')
         self.regexp_for_predict_lines = "\d{1,}\s{1,}\d{1}:\w{1,8}.{1,}"
 
@@ -207,30 +207,32 @@ class PlotManager:
         :return: void
         """
         train_years = ['13', '14', '15']
-        markers = ['o','D','h','*']
-        plot_types = ['-','--','-.',':']
+        markers = ['o','D','h','*','+']
+        plot_types = ['-','--','-.',':', ',']
         legend_line_names = {
-            'line1':'(2012-500)/(YEAR-300)',
-            'line2':'(2012-500)+(YEAR-R50)/(YEAR-300)',
-            'line3':'(2012-500)+(YEAR-L50)/(YEAR-300)',
-            'line4':'(2012-500)+(YEAR-200)/(YEAR-300)'
+            'line1':'LINE1',
+            'line2':'LINE2',
+            'line3L0':'LINE3-SVM DB',
+            'line3L1':'LINE3-kMEANS CLUSTERING',
+            'line4':'LINE4'
         }
+        # -(2012-500)/(YEAR-300)
+        # -(2012-500)+(YEAR-R50)/(YEAR-300)
+        # -(2012-500)+(YEAR-L50)/(YEAR-300)
+        # -(2012-500)+(YEAR-L50)/(YEAR-300)
+        # -(2012-500)+(YEAR-200)/(YEAR-300)
         fig, ax = plt.subplots(figsize=(20,9))
         ax.set_autoscale_on(False)
         ax.set_xlim([12.5,15.5])
 
-
         all_of_min = 100
         all_of_max = 0
-
 
         handles = []
         for first_iteration_number, (line_name, line_points) in enumerate(lines_scores.iteritems()):
             line_max, line_min = 0, 100
-            if line_name != "line2":
-                ys = line_points.values()
-                line_max, line_min = np.max(ys), np.min(ys)
-            else:
+
+            if line_name == "line2":
                 line_points_array = np.array(line_points.values())
                 ys = line_points_array[:,1]
                 mins = line_points_array[:,0]
@@ -242,24 +244,45 @@ class PlotManager:
                     ax.plot((int(train_years[sub_iteration_number])-0.05,int(train_years[sub_iteration_number])+0.05),(a_max, a_max),'k-')
                     ax.plot((int(train_years[sub_iteration_number]),int(train_years[sub_iteration_number])),(a_min, a_max),'k-')
 
+                ax.plot(train_years, ys, self.colors[first_iteration_number], marker= markers[first_iteration_number], linestyle=plot_types[first_iteration_number], linewidth=3.0)
+                patch = Patch(color=self.colors[first_iteration_number], label=legend_line_names[line_name])
+                handles.append(patch)
+
+            elif line_name == "line3":
+                for sub_iteration_number, (ale_experiment_key) in enumerate(ALE_LINE3_KEYS):
+                    proper_dict_values = [line_points[dict_key] for dict_key in line_points.keys() if dict_key.startswith(ale_experiment_key)]
+                    ys = proper_dict_values
+
+                    line_max, line_min = np.max(ys), np.min(ys)
+                    ax.plot(train_years, ys, self.colors[first_iteration_number+sub_iteration_number], marker= markers[first_iteration_number], linestyle=plot_types[first_iteration_number], linewidth=3.0)
+                    patch = Patch(color=self.colors[first_iteration_number+sub_iteration_number], label=legend_line_names[line_name+ale_experiment_key])
+                    handles.append(patch)
+
+            else:
+                ys = line_points.values()
+                line_max, line_min = np.max(ys), np.min(ys)
+                ax.plot(train_years, ys, self.colors[first_iteration_number], marker= markers[first_iteration_number], linestyle=plot_types[first_iteration_number], linewidth=3.0)
+                patch = Patch(color=self.colors[first_iteration_number], label=legend_line_names[line_name])
+                handles.append(patch)
 
             all_of_min = min(line_min, all_of_min)
             all_of_max = max(line_max, all_of_max)
 
-            ax.plot(train_years, ys, self.colors[first_iteration_number], marker= markers[first_iteration_number], linestyle=plot_types[first_iteration_number], linewidth=2.0)
-            patch = Patch(color=self.colors[first_iteration_number], label=legend_line_names[line_name])
-            handles.append(patch)
+
+        ymin = all_of_min-0.01
+        ymax = all_of_max+0.01
 
         plt.legend(handles=handles)
-        ax.set_ylim([all_of_min-0.01, all_of_max+0.01])
+
+        ax.set_ylim([ymin, ymax])
+        plt.yticks(np.arange(ymin, ymax, 0.01))
         ax.set_xticklabels(["","13","","14","","15"])
         plt.xlabel('Years')
         plt.ylabel('Scores %')
         plt.title('Scores by year with changing training sets. Classifier=SVM, ProbClassifier=SVM Feature=Word.')
         plt.tight_layout()
+        plt.grid()
         plt.show()
-
-            # for second_iteration_number, (experiment_year, experiment_year_score) in enumerate(line_points.)
 
     def _plot_2012_vs_rest_monthly(self, all_accuracy_scores):
         """
@@ -306,7 +329,6 @@ class PlotManager:
             ys = []
             for year, year_scores in classifier_scores.iteritems():
                 ys.append(np.mean(year_scores))
-            print(ys)
 
             plt.xlabel('Years')
             plt.ylabel('Scores %')
