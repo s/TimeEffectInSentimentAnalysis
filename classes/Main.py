@@ -119,7 +119,6 @@ class Main:
         all_processes = []
         self.all_experiments_results = []
 
-
         pool = Pool(cpu_count()-1 or 1)
         copy_reg.pickle(types.MethodType, self._reduce_method)
 
@@ -163,6 +162,7 @@ class Main:
         Accumulates experiments' scores
         :return: void
         """
+        an_experiments_result = self.__helper.calculate_relative_scores(an_experiments_result)
         self.all_experiments_results.append(an_experiments_result)
 
     def plot_experiment_results(self, root_dir):
@@ -243,5 +243,5 @@ class Main:
 
         for year in self.years:
             years_features_counts[year] = self.find_frequency_dictionary_for_year(year)
-
+            
         self.__plot_manager.plot_years_intersection_scores(years_features_counts)
