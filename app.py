@@ -41,4 +41,10 @@ if __name__ == "__main__":
     """
     Example code to plot __years' intersection scores with each other
     """
-    main.plot_years_intersection_scores()
+    #main.plot_years_intersection_scores()
+
+    """
+    Example code to make experiment
+    """
+    print("Initalizing.")
+    main.run_experiment_with_scikit_learn(n=1, analyzer='word')

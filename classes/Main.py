@@ -5,9 +5,10 @@ from config import *
 from random import randint
 
 from DBManager import DBManager
-from ImportManager import ImportManager
 from PlotManager import PlotManager
+from ImportManager import ImportManager
 from FeatureManager import FeatureManager
+from ExperimentManager import ExperimentManager
 
 from helpers.GeneralHelpers import GeneralHelpers
 
@@ -133,3 +134,44 @@ class Main:
             years_features_counts[year] = self.find_frequency_dictionary_for_year(year)
 
         self.__plot_manager.plot_years_intersection_scores(years_features_counts)
+
+    def run_experiment_with_scikit_learn(self, n=1, analyzer='word'):
+        """
+        Makes necessary method calls to run the experiment on scikit learn.
+        :param n: int, count n in n-gram
+        :param analyzer: string, either 'word' or 'char'
+        :return: void
+        """
+        # Retrieving all tweets from database
+        print("Retrieving all tweets from database.")
+        tweets_for_all_years = {}
+        # Iterating over all years
+        for year in self.years:
+            # Retrieving tweets for the year
+            tweets_for_year = self.__db_manager.get_tweets_for_year(year)
+            tweets_for_all_years[year] = tweets_for_year
+
+        # Creating a big list of tweets
+        print("Creating a big list of tweets.")
+        all_tweets = []
+        # Appending all tweets together
+        for year, tweets in tweets_for_all_years.iteritems():
+            all_tweets += tweets
+
+        # Generating document
+        print("Generating document and classes by preprocessing")
+        # Preprocessing and generation of document
+        document, classes = self.__feature_manager.create_document_and_classes_for_tweets(all_tweets, True)
+
+        # Getting years' tweets counts
+        print("Getting years' tweets counts.")
+        years_tweets_counts = {}
+        for year in self.years:
+            years_tweets_counts[year] = len(tweets_for_all_years[year])
+
+        experiment_manager = ExperimentManager(years_tweets_counts, n, analyzer)
+        print("Running experiments.")
+        for i in range(0, N_EXPERIMENTS):
+            print("Experiment:"+str(i))
+            experiment_manager.run_experiment(document, classes)
+            print("-"*20)

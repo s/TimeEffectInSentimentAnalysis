@@ -41,3 +41,126 @@ if "TTNet" == MODEL_NAME:
 elif "Turkcell" == MODEL_NAME:
     INFO_GAIN_ATTRIBUTES = ["müzik", "arena", "internet", "şarkı", "teşekkür", "böyle", "cif", "yavaş", "güzel", "gibi",
                             "net","sen", "hız", "para", "aracı", "ver", "daha", "kes", "sev"]
+
+#ALE CONSTANTS
+N_EXPERIMENTS = 1
+BASE_YEAR = '2012'
+MOST_DISTINCT = -998
+RANDOM_SAMPLE_SIZE = 50
+EXPERIMENT_DIR_NAME = 'ALE' # Active Learning Experiment
+MOST_DISTINCT_SAMPLE_SIZE = 50
+NOT_INCLUDE_YEARS_TWEETS = '-999'
+LINE2_RANDOM_ITERATION_NUMBER = 10
+TEST_YEARS = ('2013', '2014', '2015')
+SENTIMENT_CLASSES = ["positive", "negative", "neutral"]
+
+LINES_SETUPS = {
+    'line1': {
+        'train': [
+            {
+                '2012':'500',
+                '2013':NOT_INCLUDE_YEARS_TWEETS
+            },
+            {
+                '2012':'500',
+                '2014':NOT_INCLUDE_YEARS_TWEETS
+            },
+            {
+                '2012':'500',
+                '2015':NOT_INCLUDE_YEARS_TWEETS
+            }
+        ],
+        'test': [
+            {
+                '2013':'300'
+            },
+            {
+                '2014':'300'
+            },
+            {
+                '2015':'300'
+            }
+        ]
+    },
+    'line2': {
+        'train': [
+            {
+                '2012':'500',
+                '2013':'50'
+            },
+            {
+                '2012':'500',
+                '2014':'50'
+            },
+            {
+                '2012':'500',
+                '2015':'50'
+            }
+        ],
+        'test': [
+            {
+                '2013':'300'
+            },
+            {
+                '2014':'300'
+            },
+            {
+                '2015':'300'
+            }
+        ]
+    },
+    # 'line3': {
+    #     'train': [
+    #         {
+    #             '2012':'500',
+    #             '2013':MOST_DISTINCT
+    #         },
+    #         {
+    #             '2012':'500',
+    #             '2014':MOST_DISTINCT
+    #         },
+    #         {
+    #             '2012':'500',
+    #             '2015':MOST_DISTINCT
+    #         }
+    #     ],
+    #     'test': [
+    #         {
+    #             '2013':'300'
+    #         },
+    #         {
+    #             '2014':'300'
+    #         },
+    #         {
+    #             '2015':'300'
+    #         }
+    #     ]
+    # },
+    'line4':{
+        'train': [
+            {
+                '2012':'500',
+                '2013':'200'
+            },
+            {
+                '2012':'500',
+                '2014':'200'
+            },
+            {
+                '2012':'500',
+                '2015':'200'
+            }
+        ],
+        'test': [
+            {
+                '2013':'300'
+            },
+            {
+                '2014':'300'
+            },
+            {
+                '2015':'300'
+            }
+        ]
+    }
+} 
