@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 import sys
+import time
+import types
+import copy_reg
 import numpy as np
 from config import *
-
+from time import sleep
 from random import randint
+from multiprocessing import *
+
+
+
+
 from DBManager import DBManager
 from PlotManager import PlotManager
 from ImportManager import ImportManager
@@ -108,20 +116,54 @@ class Main:
             years_tweets_counts[year] = len(tweets_for_all_years[year])
 
 
-        experiments_results = []
+        all_processes = []
+        self.all_experiments_results = []
 
-        experiment_manager = ExperimentManager(years_tweets_counts, n, analyzer)
+
+        pool = Pool(cpu_count()-1 or 1)
+        copy_reg.pickle(types.MethodType, self._reduce_method)
+
         print("Running experiments.")
+
+        t0 = time.time()
         for i in range(0, N_EXPERIMENTS):
             print("Experiment:"+str(i))
-            all_scores_for_the_experiment = experiment_manager.run_experiment(document, classes)
-            experiments_results.append(all_scores_for_the_experiment)
-            print("-"*20)
+            experiment_manager = ExperimentManager(i, years_tweets_counts, n, analyzer)
+            r = pool.apply_async(experiment_manager.run_experiment, args=(document, classes,), callback=self._accumulate_experiments_scores)
+            all_processes.append(r)
+
+        for a_process in all_processes:
+            a_process.wait()
+
+        t1 = time.time()
+
+        print("Elapsed time:", t1- t0, " seconds")
+
+        pool.close()
+        pool.join()
 
         print("Cumulating all the experiments' scores.")
-        final_results_from_all_experiments = self.__helper.cumulate_years_scores(experiments_results)
-        print(final_results_from_all_experiments)
+        final_results_from_all_experiments = self.__helper.cumulate_years_scores(self.all_experiments_results)
         return final_results_from_all_experiments
+
+
+    def _reduce_method(self, m):
+        """
+
+        :param m:
+        :return:
+        """
+        if m.im_self is None:
+            return getattr, (m.im_class, m.im_func.func_name)
+        else:
+            return getattr, (m.im_self, m.im_func.func_name)
+
+    def _accumulate_experiments_scores(self, an_experiments_result):
+        """
+        Accumulates experiments' scores
+        :return: void
+        """
+        self.all_experiments_results.append(an_experiments_result)
 
     def plot_experiment_results(self, root_dir):
         """
@@ -201,5 +243,5 @@ class Main:
 
         for year in self.years:
             years_features_counts[year] = self.find_frequency_dictionary_for_year(year)
-            
+
         self.__plot_manager.plot_years_intersection_scores(years_features_counts)

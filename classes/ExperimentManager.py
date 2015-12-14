@@ -3,7 +3,6 @@ import numpy as np
 from config import *
 from random import randint
 
-
 from scipy import *
 from scipy import sparse
 
@@ -24,14 +23,18 @@ class ExperimentManager:
     """
     This class run an experiment
     """
-    def __init__(self, years_tweets_counts, n=1, analyzer='word'):
+    def __init__(self, experiment_number, years_tweets_counts, n=1, analyzer='word'):
         self.__n = n
+        self.__all_scores = {}
+        self.__feature_count = 0
         self.__analyzer = analyzer
+        self.__experiment_number = experiment_number
         self.__years_tweets_counts= years_tweets_counts
+
+
         self.__label_encoder = preprocessing.LabelEncoder()
         self.__label_encoder.fit(SENTIMENT_CLASSES)
-        self.__feature_count = 0
-        self.__all_scores = {}
+
 
     def run_experiment(self, document, classes):
         """
@@ -45,7 +48,6 @@ class ExperimentManager:
 
         self.__feature_count = len(features)
         self.__features = features
-        print("Total feature count:"+str(self.__feature_count))
 
         # Getting in ndarray format
         X = X_sparse.toarray()
@@ -213,7 +215,7 @@ class ExperimentManager:
 
         # Iterating over lines
         for line_name, line_value in LINES_SETUPS.iteritems():
-            print(line_name)
+            print('Currently running on Experiment #'+str(self.__experiment_number)+', '+line_name)
             self.__all_scores[line_name] = {}
 
             # Itearating over each setup( say 500-2012, 200-2013 / 300-2013)
@@ -226,7 +228,6 @@ class ExperimentManager:
                             self._create_train_and_test_sets_from_setup_dict(years_X_sparse, years_y, train_set_setup, test_set_setup, line_name, -1)
 
                     acc_score = self._classify(X_train, X_test, y_train, y_test)
-                    print(train_set_name, test_set_name, acc_score)
                     self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
 
                 elif line_name == "line2":
@@ -237,7 +238,6 @@ class ExperimentManager:
                         self._create_train_and_test_sets_from_setup_dict(years_X_sparse, years_y, train_set_setup, test_set_setup, line_name, random_50_iteration_index)
 
                         acc_score = self._classify(X_train, X_test, y_train, y_test)
-                        print(train_set_name, test_set_name, acc_score)
                         self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
 
                 elif line_name == "line3":
@@ -282,12 +282,8 @@ class ExperimentManager:
 
                     acc_score = self._classify(final_sparse_X_train, final_X_test, final_y_train, final_y_test)
 
-
-
                     train_set_name = prob_train_year + "_" + prob_train_count + "+" + prob_test_year + "_" + str(MOST_DISTINCT_SAMPLE_SIZE)
                     test_set_name = final_X_test_year + "_" + final_X_test_tweet_count
-
-                    print(train_set_name, test_set_name, acc_score)
                     self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
 
     def _create_train_and_test_sets_from_setup_dict(self, years_X_sparse, years_y, train_setup, test_setup, line_name, iteration_number):
@@ -434,10 +430,9 @@ class ExperimentManager:
         Returns new classifier instance
         :return: OneVsRestClassifier
         """
-        classifier = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
-        classifier = OneVsRestClassifier(classifier)
-
-        # classifier = RandomForestClassifier(n_estimators=100,random_state=1)
+        # classifier = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
+        # classifier = OneVsRestClassifier(classifier)
+        classifier = RandomForestClassifier(n_estimators=100)
 
         return classifier
 
@@ -448,8 +443,7 @@ class ExperimentManager:
         """
         model_for_logical_selection = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
         model_for_logical_selection = OneVsRestClassifier(model_for_logical_selection)
-
-        # model_for_logical_selection = RandomForestClassifier(n_estimators=100)
+        #model_for_logical_selection = RandomForestClassifier(n_estimators=100)
 
         return model_for_logical_selection
 
