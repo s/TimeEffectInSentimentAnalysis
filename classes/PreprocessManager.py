@@ -36,7 +36,6 @@ class PreprocessManager(Preprocessor):
         :return: string, suggestion
         """
         has_special_keyword, special_keyword = self._has_special_keyword(word)
-
         if not has_special_keyword:
             if word in self.__suggestion_cache:
                 return self.__suggestion_cache[word]

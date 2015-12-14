@@ -7,8 +7,6 @@ import json
 import string
 import difflib
 
-
-
 class Preprocessor:
 
     def __init__(self):
@@ -99,3 +97,4 @@ class Preprocessor:
 
     def string_contains_digits(self, string):
         return bool(self.compiledDigitRegex.search(string))
+

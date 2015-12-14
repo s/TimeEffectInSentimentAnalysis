@@ -14,16 +14,16 @@ class PlotManager:
     This class does the necessary works for visualizing data
     """
     def __init__(self):
-        self.first_year = 2012
+        self.__first_year = 2012
         self.__helper = GeneralHelpers()
-        self.colors = ['r', 'b', 'y', 'm', 'k', 'c', 'g']
-        self.years = ('2012', '2013', '2014', '2015')
-        self.regexp_for_predict_lines = "\d{1,}\s{1,}\d{1}:\w{1,8}.{1,}"
+        self.__colors = ['r', 'b', 'y', 'm', 'g', 'c', 'k']
+        self.__years = ('2012', '2013', '2014', '2015')
+        self.__regexp_for_predict_lines = "\d{1,}\s{1,}\d{1}:\w{1,8}.{1,}"
 
 
     def plot_years_scores_from_root_directory(self, root_dir):
         """
-        Plots years' scores for given classifiers and mean of them
+        Plots __years' scores for given classifiers and mean of them
         :param root_dir: string, root directory to scan
         :return: void
         """
@@ -43,14 +43,14 @@ class PlotManager:
         indexes = np.arange(len(years_classifier_scores_dict.keys()))  # [0,1,2,3] +
 
         # Iterating over J48 for 2012, 2013, 2014, 2015, MEAN for 2012, 2013, 2014, 2015 an so on..
-        for iteration_number, (color_name, classifier_name, classifier_scores) in enumerate(zip(self.colors, classifier_names, years_classifier_scores_list.T)):
+        for iteration_number, (color_name, classifier_name, classifier_scores) in enumerate(zip(self.__colors, classifier_names, years_classifier_scores_list.T)):
             bar_offset = indexes + (iteration_number * bar_width)
             plt.bar(bar_offset, classifier_scores, bar_width, color=color_name, label=classifier_name)
 
         plt.xlabel('Years')
         plt.ylabel('Scores %')
         plt.title('Scores by year and classifier(' + MODEL_NAME + ', CV=4)')
-        plt.xticks(indexes + bar_width, self.years)
+        plt.xticks(indexes + bar_width, self.__years)
         plt.legend(loc=4)
         plt.show()
 
@@ -84,13 +84,12 @@ class PlotManager:
 
     def plot_top_feature_frequencies_in_years(self, years_features_counts):
         """
-        Plots top features' frequencies in years
+        Plots top features' frequencies in __years
         :return: void
         """
 
         plot_feature_counts = {}
         bar_width = 0.20
-        years_colors = ['r', 'b', 'm', 'c']
 
         for feature_name in INFO_GAIN_ATTRIBUTES:
             if not feature_name in plot_feature_counts:
@@ -98,7 +97,7 @@ class PlotManager:
 
             f_key = feature_name.decode('utf-8')
 
-            for year in self.years:
+            for year in self.__years:
                 if not f_key in years_features_counts[year]:
                     years_features_counts[year][f_key] = 0
 
@@ -112,19 +111,19 @@ class PlotManager:
         indexes = np.arange(len(plot_feature_counts.keys()))
 
         for first_iteration_number, (feature_name, feature_counts) in enumerate(plot_feature_counts.iteritems()):
-            for second_iteration_number, (color, feature_count) in enumerate(zip(years_colors, feature_counts)):
+            for second_iteration_number, (color, feature_count) in enumerate(zip(self.__colors, feature_counts)):
                 x_coord = first_iteration_number + (second_iteration_number*bar_width)
                 plt.bar(x_coord, feature_count, bar_width, color=color)
 
         xticks = [key.decode('utf-8') for key in plot_feature_counts.keys()]
 
         plt.xlabel('Features')
-        plt.ylabel('Frequencies in years')
+        plt.ylabel('Frequencies in __years')
         plt.title('InfoGain features by year and features(' + MODEL_NAME + ')')
         plt.xticks(indexes + bar_width*2, xticks)
 
         handles = []
-        for idx, (year, color) in enumerate(zip(self.years, years_colors)):
+        for idx, (year, color) in enumerate(zip(self.__years, years_colors)):
             patch = Patch(color=color, label=year)
             handles.append(patch)
 
@@ -133,12 +132,12 @@ class PlotManager:
 
     def plot_years_intersection_scores(self, years_features_counts):
         """
-        Plots a matrix which shows years' vocabularies similarities
+        Plots a matrix which shows __years' vocabularies similarities
         :param years_features_counts: dict
         :return: void
         """
 
-        years_intersection_scores = np.zeros((len(self.years),len(self.years)))
+        years_intersection_scores = np.zeros((len(self.__years),len(self.__years)))
         feature_frequencies = years_features_counts
 
         for first_iteration_number, (x_year, x_years_features) in enumerate(feature_frequencies.iteritems()):
@@ -161,44 +160,15 @@ class PlotManager:
 
                     ratio = float(intersect_count)/total_count
 
-                    i_index = int(x_year) - self.first_year #0
-                    j_index = int(y_year) - self.first_year #1
+                    i_index = int(x_year) - self.__first_year #0
+                    j_index = int(y_year) - self.__first_year #1
                     years_intersection_scores[i_index][j_index] = ratio
 
 
-        all_scores_df = pd.DataFrame(years_intersection_scores, self.years, self.years)
+        all_scores_df = pd.DataFrame(years_intersection_scores, self.__years, self.__years)
 
-        print(MODEL_NAME+'\'s years\' vocabulary similarities:')
+        print(MODEL_NAME+'\'s __years\' vocabulary similarities:')
         print(all_scores_df)
-
-    def plot_experiments_results(self, lines_scores):
-        """
-        Plots experiment's scores
-        :param lines_scores: dict
-        :return: void
-        """
-        train_years = ['13', '14', '15']
-        fig, ax = plt.subplots()
-
-        # Iterating over lines
-        for iteration_number, (line, line_points) in enumerate(lines_scores.iteritems()):
-            ys = line_points.values()
-            ax.plot(train_years, ys, self.colors[iteration_number]+'o-')
-
-        ax.set_xlim([12.7,15.5])
-
-        for first_iteration_number, (line, line_points) in enumerate(lines_scores.iteritems()):
-            for second_iteration_number, (point_name, point) in enumerate(line_points.iteritems()):
-                point_text = self.__helper.find_key_of_given_value_in_dict(LINES_DIR_DICT, point_name)
-
-                ax.annotate(point_text, (train_years[second_iteration_number], point))
-
-
-        plt.xlabel('Years')
-        plt.ylabel('Scores %')
-        plt.title('Scores by year with changing training sets. Classifier=RF(n=100), Probability Classifier=RF(n=100), Feature=Word, TTNet')
-        plt.legend()
-        plt.show()
 
     def plot_experiments_results_with_scikit_learn(self, lines_scores):
         """
@@ -206,14 +176,15 @@ class PlotManager:
         :param lines_scores: dict
         :return: void
         """
-        train_years = ['13', '14', '15']
+        test_years = ['13', '14', '15']
         markers = ['o','D','h','*','+']
         plot_types = ['-','--','-.',':', ',']
         legend_line_names = {
             'line1':'LINE1',
             'line2':'LINE2',
-            'line3L0':'LINE3-SVM DB',
+            'line3L0':'LINE3-RF DB',
             'line3L1':'LINE3-kMEANS CLUSTERING',
+            'line3L2':'LINE3-kMEANS CLUSTERING(probabilities)',
             'line4':'LINE4'
         }
         # -(2012-500)/(YEAR-300)
@@ -229,6 +200,7 @@ class PlotManager:
         all_of_max = 0
 
         handles = []
+        color_index = 0
         for first_iteration_number, (line_name, line_points) in enumerate(lines_scores.iteritems()):
             line_max, line_min = 0, 100
 
@@ -240,12 +212,13 @@ class PlotManager:
                 line_max, line_min = np.max(maxs), np.min(mins)
 
                 for sub_iteration_number, (a_min, a_max) in enumerate(zip(mins, maxs)):
-                    ax.plot((int(train_years[sub_iteration_number])-0.05,int(train_years[sub_iteration_number])+0.05),(a_min, a_min),'k-')
-                    ax.plot((int(train_years[sub_iteration_number])-0.05,int(train_years[sub_iteration_number])+0.05),(a_max, a_max),'k-')
-                    ax.plot((int(train_years[sub_iteration_number]),int(train_years[sub_iteration_number])),(a_min, a_max),'k-')
+                    ax.plot((int(test_years[sub_iteration_number])-0.05,int(test_years[sub_iteration_number])+0.05),(a_min, a_min),'k-')
+                    ax.plot((int(test_years[sub_iteration_number])-0.05,int(test_years[sub_iteration_number])+0.05),(a_max, a_max),'k-')
+                    ax.plot((int(test_years[sub_iteration_number]),int(test_years[sub_iteration_number])),(a_min, a_max),'k-')
 
-                ax.plot(train_years, ys, self.colors[first_iteration_number], marker= markers[first_iteration_number], linestyle=plot_types[first_iteration_number], linewidth=3.0)
-                patch = Patch(color=self.colors[first_iteration_number], label=legend_line_names[line_name])
+                ax.plot(test_years, ys, self.__colors[color_index], marker= markers[first_iteration_number], linestyle=plot_types[first_iteration_number], linewidth=3.0)
+                patch = Patch(color=self.__colors[color_index], label=legend_line_names[line_name])
+                color_index+=1
                 handles.append(patch)
 
             elif line_name == "line3":
@@ -254,17 +227,17 @@ class PlotManager:
                     ys = proper_dict_values
 
                     line_max, line_min = np.max(ys), np.min(ys)
-                    ax.plot(train_years, ys, self.colors[first_iteration_number+sub_iteration_number], marker= markers[first_iteration_number], linestyle=plot_types[first_iteration_number], linewidth=3.0)
-                    patch = Patch(color=self.colors[first_iteration_number+sub_iteration_number], label=legend_line_names[line_name+ale_experiment_key])
+                    ax.plot(test_years, ys, self.__colors[color_index], marker= markers[first_iteration_number], linestyle=plot_types[first_iteration_number], linewidth=3.0)
+                    patch = Patch(color=self.__colors[color_index], label=legend_line_names[line_name+ale_experiment_key])
                     handles.append(patch)
-
+                    color_index+=1
             else:
                 ys = line_points.values()
                 line_max, line_min = np.max(ys), np.min(ys)
-                ax.plot(train_years, ys, self.colors[first_iteration_number], marker= markers[first_iteration_number], linestyle=plot_types[first_iteration_number], linewidth=3.0)
-                patch = Patch(color=self.colors[first_iteration_number], label=legend_line_names[line_name])
+                ax.plot(test_years, ys, self.__colors[color_index], marker= markers[first_iteration_number], linestyle=plot_types[first_iteration_number], linewidth=3.0)
+                patch = Patch(color=self.__colors[color_index], label=legend_line_names[line_name])
                 handles.append(patch)
-
+                color_index+=1
             all_of_min = min(line_min, all_of_min)
             all_of_max = max(line_max, all_of_max)
 
@@ -279,7 +252,7 @@ class PlotManager:
         ax.set_xticklabels(["","13","","14","","15"])
         plt.xlabel('Years')
         plt.ylabel('Scores %')
-        plt.title('Scores by year with changing training sets. Classifier=SVM, ProbClassifier=SVM Feature=Word.')
+        plt.title('Scores by year with changing training sets. Classifier=RF Feature=Word.')
         plt.tight_layout()
         plt.grid()
         plt.show()
@@ -335,6 +308,6 @@ class PlotManager:
             plt.title('Scores by year and classifier(' + MODEL_NAME + ', train=2012, test=2013, 2014, 2015)')
             ax.set_xticklabels(xs)
             plt.xticks(rotation=90)
-            ax.plot(xs, ys, self.colors[iteration_number], label=names_of_classifiers[iteration_number])
+            ax.plot(xs, ys, self.__colors[iteration_number], label=names_of_classifiers[iteration_number])
             plt.legend()
         plt.show()

@@ -11,10 +11,14 @@ from models.TurkcellTweet import TurkcellTweet
 
 class DBManager:
     """
-        Database related stuff
+    This class manages database basic operations
     """
 
     def __init__(self):
+        """
+        Constructor method
+        :return:
+        """
         engine = create_engine('mysql+pymysql://root:@localhost/Thesis?charset=utf8')
         Session = sessionmaker(bind=engine)
         self.session = Session()
@@ -79,6 +83,13 @@ class DBManager:
         elif "Turkcell" == MODEL_NAME:
             return TurkcellTweet
 
+    def get_model_table_name(self):
+        """
+        Returns table name of model
+        :return: string
+        """
+        return MODEL_NAME + 'Tweets'
+
     def get_years_tweets_counts(self, year):
         """
         Returns tweet count for given year
@@ -116,10 +127,3 @@ class DBManager:
             model_month_counts[year].append(count)
 
         return model_month_counts
-
-    def get_model_table_name(self):
-        """
-        Returns table name of model
-        :return: string
-        """
-        return MODEL_NAME + 'Tweets'

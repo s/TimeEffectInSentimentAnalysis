@@ -78,7 +78,7 @@ class GeneralHelpers:
         :param suggestions_cache: dict, suggestions
         :return: void
         """
-        suggestion_cache_file_path = self.__dictionaries_directory + SUGGESTION_CACHE_FILE_NAME
+        suggestion_cache_file_path = self.__dictionaries_directory + MODEL_NAME + '/' + SUGGESTION_CACHE_FILE_NAME
         self._write_json_to_file(suggestions_cache, suggestion_cache_file_path)
 
     def save_changes_in_root_cache(self, roots_cache):
@@ -87,7 +87,7 @@ class GeneralHelpers:
         :param roots_cache: roots_cache, dict, roots
         :return: void
         """
-        roots_file_path = self.__dictionaries_directory + ROOTS_CACHE_FILE_NAME
+        roots_file_path = self.__dictionaries_directory + MODEL_NAME + '/' + ROOTS_CACHE_FILE_NAME
         self._write_json_to_file(roots_cache, roots_file_path)
 
     def load_suggestion_cache(self):
@@ -148,9 +148,9 @@ class GeneralHelpers:
 
     def get_accuracy_scores_for_years_from_root_dir(self, root_dir):
         """
-        Returns a dict of years' classifier scores
+        Returns a dict of __years' classifier scores
         :param root_dir: string, path to root directory
-        :return: dict, years' classifier scores
+        :return: dict, __years' classifier scores
         """
         years_scores = {}
 
@@ -187,7 +187,7 @@ class GeneralHelpers:
         """
         Returns a dict of scores
         :param root_dir: string, path to root directory
-        :return: dict, years' classifier scores
+        :return: dict, __years' classifier scores
         """
         lines_scores = {}
 
@@ -372,7 +372,7 @@ class GeneralHelpers:
 
     def cumulate_years_scores(self, years_scores):
         """
-        Cumulates and finds averages of all years' scores
+        Cumulates and finds averages of all __years' scores
         :param years_scores: list
         :return: dict
         """
@@ -406,6 +406,7 @@ class GeneralHelpers:
 
         print('Relative scores:')
         pprint.pprint(final_result_of_all_experiments, width=2)
+        print(final_result_of_all_experiments)
         for line_name, score in final_result_of_all_experiments['line3'].iteritems():
 
             target_line1_key = self.get_line1_key_from_line3_key(line_name)

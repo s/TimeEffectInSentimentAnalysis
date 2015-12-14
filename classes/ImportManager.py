@@ -5,12 +5,10 @@ from PreprocessManager import PreprocessManager
 
 from helpers.GeneralHelpers import GeneralHelpers
 
-from models.TTNetTweet import TTNetTweet
-
 class ImportManager:
 
     """
-        This class imports tweets from txt files to MySQL database
+    This class imports tweets from txt files to MySQL database
     """
 
     __file_path = None
@@ -18,6 +16,7 @@ class ImportManager:
 
     def __init__(self, file_path_to_import):
         """
+        Constructor method
         :param file_path_to_import: String a txt file path containing tweet ids
         :return: ImportManager instance
         """
