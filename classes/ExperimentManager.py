@@ -290,7 +290,6 @@ class ExperimentManager:
                     print(train_set_name, test_set_name, acc_score)
                     self._save_accuracy_score(line_name, train_set_name, test_set_name, acc_score)
 
-
     def _create_train_and_test_sets_from_setup_dict(self, years_X_sparse, years_y, train_setup, test_setup, line_name, iteration_number):
         """
 
@@ -420,10 +419,9 @@ class ExperimentManager:
         :return:
         """
         # Getting new model instance
-        classifier = self._get_new_classifier()
+        classifier = self._get_new_model_for_logical_selection()
 
         # Fitting
-        y_train = self.__label_encoder.transform(y_train)
         classifier.fit(X_train, y_train)
 
         # Getting probabilities
@@ -438,9 +436,22 @@ class ExperimentManager:
         """
         classifier = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
         classifier = OneVsRestClassifier(classifier)
-        #classifier = RandomForestClassifier(n_estimators=100)
+
+        # classifier = RandomForestClassifier(n_estimators=100,random_state=1)
 
         return classifier
+
+    def _get_new_model_for_logical_selection(self):
+        """
+        Returns new classifier instance for logical selection
+        :return:
+        """
+        model_for_logical_selection = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
+        model_for_logical_selection = OneVsRestClassifier(model_for_logical_selection)
+
+        # model_for_logical_selection = RandomForestClassifier(n_estimators=100)
+
+        return model_for_logical_selection
 
     def _get_sample_indexes_closest_to_decision_boundary(self, samples_probabilities):
         """
