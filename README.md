@@ -1,5 +1,5 @@
 #Time Effect In Sentiment Analysis
-This project is run by [@meryem](http://github.com/meryem) and [@s](http://github.com/s) as a Bachelor Thesis in [Computer Engineering Department of YTU](http://ce.yildiz.edu.tr) with mentorship of [Assistant Prof. Dr. M. Fatih AMASYALI](https://scholar.google.com.tr/citations?user=qTUSAy0AAAAJ&hl=tr&oi=sra).
+This project is developed by [@meryem](http://github.com/meryem) and [@s](http://github.com/s) as a Bachelor Thesis in [Computer Engineering Department of YTU](http://ce.yildiz.edu.tr) with mentorship of [Assistant Prof. Dr. M. Fatih AMASYALI](https://scholar.google.com.tr/citations?user=qTUSAy0AAAAJ&hl=tr&oi=sra).
 
 ##About
 Project started on September 14 and written in mostly in Python but some little part of the system is written in Java and included in the project as .jar files.
