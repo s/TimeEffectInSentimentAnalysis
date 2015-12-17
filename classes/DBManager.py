@@ -7,7 +7,7 @@ from sqlalchemy.sql.expression import extract
 
 from models.TTNetTweet import TTNetTweet
 from models.TurkcellTweet import TurkcellTweet
-
+from models.TurkcellMergedTweet import TurkcellMergedTweet
 
 class DBManager:
     """
@@ -19,7 +19,7 @@ class DBManager:
         Constructor method
         :return:
         """
-        engine = create_engine('mysql+pymysql://root:@localhost/Thesis?charset=utf8')
+        engine = create_engine('mysql+pymysql://root:@localhost/Thesis?charset=utf8mb4')
         Session = sessionmaker(bind=engine)
         self.session = Session()
         self.engine = engine
@@ -42,6 +42,7 @@ class DBManager:
             except Exception, e:
                 not_imported_tweets.append(tweet_object)
                 self.session.rollback()
+                print(e)
 
         return successful_tweet_count, not_imported_tweets
 
@@ -72,6 +73,8 @@ class DBManager:
             return TTNetTweet()
         elif "Turkcell" == MODEL_NAME:
             return TurkcellTweet()
+        elif "TurkcellMerged" == MODEL_NAME:
+            return TurkcellMergedTweet()
 
     def get_new_model(self):
         """
@@ -82,6 +85,8 @@ class DBManager:
             return TTNetTweet
         elif "Turkcell" == MODEL_NAME:
             return TurkcellTweet
+        elif "TurkcellMerged" == MODEL_NAME:
+            return TurkcellMergedTweet
 
     def get_model_table_name(self):
         """

@@ -464,7 +464,6 @@ class ExperimentManager:
         #model_for_classification = RandomForestClassifier(n_estimators=100)
         #model_for_classification = GradientBoostingClassifier(n_estimators=100)
         #model_for_classification = GaussianNB()
-
         model_for_classification = xgb.XGBClassifier(n_estimators=100)
 
         return model_for_classification

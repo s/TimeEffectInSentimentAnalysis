@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+
+import os
+import csv
+import time
+from datetime import datetime
+
 from DBManager import DBManager
 from TwitterManager import TwitterManager
 from PreprocessManager import PreprocessManager
@@ -14,7 +20,7 @@ class ImportManager:
     __file_path = None
     __components_in_a_line = None
 
-    def __init__(self, file_path_to_import):
+    def __init__(self):
         """
         Constructor method
         :param file_path_to_import: String a txt file path containing tweet ids
@@ -24,18 +30,18 @@ class ImportManager:
         self.__db_manager = DBManager()
         self.__helper = GeneralHelpers()
         self.__preprocess_manager = PreprocessManager()
-        self.__file_path = file_path_to_import
         self.__tweets_classes_dictionary = {}
 
         # magic numbers
         self.__components_in_a_line = 2
         self.__max_num_of_tweets_at_once = 100
 
-    def run(self):
+    def run(self, file_path_to_import):
         """
         Runs all necessary methods to import tweets for a year
         :return: void
         """
+        self.__file_path = file_path_to_import
 
         # getting tweets with their classes
         tweets_with_classes = self._parse_tweets_from_file()
@@ -199,3 +205,63 @@ class ImportManager:
         tweets_ids = self._get_tweets_ids(self.__tweets_with_classes)
         response_ids = [a_tweet_response.id_str for a_tweet_response in twitter_response]
         return list(set(tweets_ids) - set(response_ids))
+
+    def import_new_tweets_from_csv(self, root_path):
+        """
+
+        :param root_path:
+        :return:
+        """
+        tweet_objects = []
+
+        for file in os.listdir(root_path):
+            if file.endswith('.csv'):
+                with open(root_path+file, 'r') as file_handle:
+                    reader = csv.reader(file_handle, delimiter=';')
+                    next(reader, None)  # skip the headers
+                    for row in reader:
+                        a_tweet_obj = self._create_tweet_object_from_line(row, file)
+                        tweet_objects.append(a_tweet_obj)
+
+        success_count, not_imported_tweets = self.__db_manager.insert_tweet_objects(tweet_objects)
+        print(success_count)
+        print(not_imported_tweets)
+
+    def _create_tweet_object_from_line(self, components, file_name):
+        """
+
+        :param a_line:
+        :return:
+        """
+        MAP_DICT = {
+            'e': 'positive',
+            'h': 'negative',
+            'n': 'neutral'
+        }
+
+        id_component = components[0]
+        date_component = components[2]
+        text_component = components[3]
+        sentiment_component = MAP_DICT[components[4]]
+        year_abv = file_name.split('.')[0][2:]
+
+        if year_abv not in file_name:
+            return
+
+
+        date_len = len(date_component.split('-'))
+        if date_len == 2:
+            date_component = date_component + '-' + year_abv
+
+        format_str = '%d-%b-%y'
+
+        datetime_of_tweet = datetime.strptime(date_component, format_str)
+
+
+        tweet_object = self.__db_manager.get_new_model_instance()
+        tweet_object.id = self.__helper.generate_random_string(10)
+        tweet_object.text = text_component
+        tweet_object.created_at = datetime_of_tweet
+        tweet_object.tweet_class = sentiment_component
+
+        return tweet_object

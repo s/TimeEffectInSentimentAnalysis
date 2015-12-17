@@ -3,10 +3,11 @@ import os
 
 PROJECT_ROOT_DIRECTORY = os.path.realpath("../")
 
-MODEL_NAME = "TTNet" # Turkcell or TTNet
+MODEL_NAME = "Turkcell" # Turkcell or TTNet
 
 JAR_FILE_DIR_NAME = "jars/"
 CHARTS_DIR_NAME = "/Charts/"
+DATASET_CSV_DIR_NAME = "/DataSet-CSV/"
 DATASET_TXT_DIR_NAME = "/DataSet-TXT/"
 DATASET_ARFF_DIR_NAME = "/DataSet-ARFF/"
 DATASET_LOGS_DIR_NAME = "/DataSet-Logs/"

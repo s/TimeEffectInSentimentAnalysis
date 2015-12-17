@@ -25,6 +25,7 @@ class Main:
         self.__db_manager = DBManager()
         self.__helper = GeneralHelpers()
         self.__plot_manager = PlotManager()
+        self.__import_manager = ImportManager()
         self.__feature_manager = FeatureManager()
 
         self.years = ("2012", "2013", "2014", "2015")
@@ -35,8 +36,7 @@ class Main:
         :param file_path_of_ids: String, file path of tweets to import
         :return: void
         """
-        importer = ImportManager(file_path_of_ids)
-        importer.run()
+        self.__import_manager.run(file_path_of_ids)
 
     def extract_features_and_generate_arff(self, n=3, analyzer='char', year='2012'):
         """
@@ -239,3 +239,11 @@ class Main:
             years_features_counts[year] = self.find_frequency_dictionary_for_year(year)
             
         self.__plot_manager.plot_years_intersection_scores(years_features_counts)
+
+    def import_new_tweets_from_csv(self, root_path):
+        """
+
+        :param root_path:
+        :return:
+        """
+        self.__import_manager.import_new_tweets_from_csv(root_path)

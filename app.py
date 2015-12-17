@@ -53,11 +53,16 @@ if __name__ == "__main__":
     for line_name, line_points in all_line_scores_of_all_experiments.iteritems():
         all_line_scores_of_all_experiments[line_name] = collections.OrderedDict(sorted(line_points.items()))
 
-
     main.plot_all_experiment_results_with_scikit_learn(all_line_scores_of_all_experiments)
 
     """
-    Example code to plot experiment results
+    Example code to plot experiment results from Weka
     """
     # root_path = PROJECT_ROOT_DIRECTORY + DATASET_LOGS_DIR_NAME + MODEL_NAME + '_ALE_' + FEATURE_TYPE + '_SMO' + '/'
     # main.plot_experiment_results(root_path)
+
+    """
+    Example code to import new tweets from csv
+    """
+    # root_path = PROJECT_ROOT_DIRECTORY + DATASET_CSV_DIR_NAME + MODEL_NAME + "/"
+    # main.import_new_tweets_from_csv(root_path)
