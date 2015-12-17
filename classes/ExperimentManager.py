@@ -7,17 +7,20 @@ import numpy as np
 from scipy import *
 from scipy import sparse
 
+import xgboost as xgb
+
 from matplotlib import pyplot as plt
 
 from sklearn.svm import SVC
+from sklearn.cluster import KMeans
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+
 from sklearn.metrics import *
 from sklearn.utils import shuffle
 from sklearn import preprocessing
-from sklearn.cluster import KMeans
-from sklearn.decomposition import TruncatedSVD
-
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.feature_extraction.text import CountVectorizer
 
 
@@ -246,9 +249,10 @@ class ExperimentManager:
                     train_set_name_appendix = prob_train_year + "_" + prob_train_count + "+" + prob_test_year + "_" + str(MOST_DISTINCT_SAMPLE_SIZE)
 
 
-                    # Active Learning Method - I
+                    #Active Learning Method - I
+                    print('Active Learning Method - I')
                     samples_closest_to_decision_boundary_X, samples_closest_to_decision_boundary_y, indexes_of_samples_closest_to_decision_boundary = \
-                        self._choose_ale_samples_closest_to_decision_boundary(prob_X_train, prob_X_test, prob_y_train, prob_y_test)
+                        self._choose_ale_samples_closest_to_decision_boundary(prob_X_train, prob_X_test, prob_y_train, prob_y_test, MOST_DISTINCT_SAMPLE_SIZE)
 
                     acc_score_for_ale_one = self._combine_train_sets_and_run_classification(prob_X_train, final_X_test,
                                                                                             samples_closest_to_decision_boundary_X,
@@ -266,6 +270,7 @@ class ExperimentManager:
 
 
                     # Active Learning Method - II
+                    print('Active Learning Method - II')
                     samples_closest_to_cluster_centroids_org_X, samples_closest_to_cluster_centroids_org_y, indices_of_closest_samples_to_centroids = \
                         self._choose_ale_samples_from_cluster_centroids_with_original_features(prob_X_test, prob_y_test)
 
@@ -279,6 +284,7 @@ class ExperimentManager:
 
 
                     # Active Learning Method - III
+                    print('Active Learning Method - III')
                     probabilities = self._predict_probabilities(prob_X_train, prob_X_test, prob_y_train)
 
                     samples_closest_to_cluster_centroids_cmb_X, samples_closest_to_cluster_centroids_cmb_y, indices_of_closest_samples_to_centroids = \
@@ -291,7 +297,16 @@ class ExperimentManager:
 
                     train_set_name_three = "L2-" + train_set_name_appendix
                     self._save_accuracy_score(line_name, train_set_name_three, test_set_name, acc_score_for_ale_three)
-                    
+
+
+
+                    # Active Learning Method - IV
+                    print('Active Learning Method - IV')
+                    it_X_train, it_X_test, it_y_train, it_y_test = \
+                        self._choose_ale_samples_closest_to_decision_boundary_with_iteration(prob_X_train, prob_X_test, prob_y_train, prob_y_test)
+                    acc_score_for_ale_four = self._classify(it_X_train, final_X_test, it_y_train, final_y_test)
+                    train_set_name_three = "L3-" + train_set_name_appendix
+                    self._save_accuracy_score(line_name, train_set_name_three, test_set_name, acc_score_for_ale_four)
 
     def _create_train_and_test_sets_from_setup_dict(self, years_X_sparse, years_y, train_setup, test_setup, line_name, iteration_number):
         """
@@ -446,7 +461,11 @@ class ExperimentManager:
         """
         #model_for_classification = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
         #model_for_classification = OneVsRestClassifier(model_for_classification)
-        model_for_classification = RandomForestClassifier(n_estimators=100)
+        #model_for_classification = RandomForestClassifier(n_estimators=100)
+        #model_for_classification = GradientBoostingClassifier(n_estimators=100)
+        #model_for_classification = GaussianNB()
+
+        model_for_classification = xgb.XGBClassifier(n_estimators=100)
 
         return model_for_classification
 
@@ -457,7 +476,10 @@ class ExperimentManager:
         """
         #model_for_logical_selection_with_classification = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
         #model_for_logical_selection_with_classification = OneVsRestClassifier(model_for_logical_selection_with_classification)
-        model_for_logical_selection_with_classification = RandomForestClassifier(n_estimators=100)
+        #model_for_logical_selection_with_classification = RandomForestClassifier(n_estimators=100)
+        #model_for_logical_selection_with_classification = GradientBoostingClassifier(n_estimators=100)
+        #model_for_logical_selection_with_classification = MultinomialNB()
+        model_for_logical_selection_with_classification = xgb.XGBClassifier(n_estimators=100)
 
         return model_for_logical_selection_with_classification
 
@@ -470,7 +492,7 @@ class ExperimentManager:
 
         return model_for_logical_selection_with_clustering
 
-    def _get_sample_indexes_closest_to_decision_boundary(self, samples_probabilities):
+    def _get_sample_indexes_closest_to_decision_boundary(self, samples_probabilities, sample_size):
         """
         Returns samples' indexes which are closest to decision boundary
         :param samples: list
@@ -479,7 +501,7 @@ class ExperimentManager:
         # Finding elements which have minimum standart deviations
         np_array = self._find_standart_deviations_of_samples_probabilities(samples_probabilities)
 
-        indices_of_minimum_stds = np_array.argsort()[:MOST_DISTINCT_SAMPLE_SIZE]
+        indices_of_minimum_stds = np_array.argsort()[:sample_size]
         # for indice in indices_of_minimum_stds:
         #     print(samples_probabilities[indice], standart_deviations[indice])
         return indices_of_minimum_stds
@@ -564,7 +586,7 @@ class ExperimentManager:
 
         plt.show()
 
-    def _choose_ale_samples_closest_to_decision_boundary(self, prob_X_train, prob_X_test, prob_y_train, prob_y_test):
+    def _choose_ale_samples_closest_to_decision_boundary(self, prob_X_train, prob_X_test, prob_y_train, prob_y_test, sample_size):
         """
         Returns closest samples to the decision boundary.
         :param prob_X_train: scipy.sparse
@@ -577,12 +599,51 @@ class ExperimentManager:
         probabilities = self._predict_probabilities(prob_X_train, prob_X_test, prob_y_train)
 
         # Find closest samples to the decision boundary
-        indexes_of_samples_closest_to_decision_boundary = self._get_sample_indexes_closest_to_decision_boundary(probabilities)
+        indexes_of_samples_closest_to_decision_boundary = self._get_sample_indexes_closest_to_decision_boundary(probabilities, sample_size)
 
         samples_closest_to_decision_boundary_X = prob_X_test[indexes_of_samples_closest_to_decision_boundary]
         samples_closest_to_decision_boundary_y = prob_y_test[indexes_of_samples_closest_to_decision_boundary]
 
         return samples_closest_to_decision_boundary_X, samples_closest_to_decision_boundary_y, indexes_of_samples_closest_to_decision_boundary
+
+    def _choose_ale_samples_closest_to_decision_boundary_with_iteration(self, prob_X_train, prob_X_test, prob_y_train, prob_y_test):
+        """
+
+        :param prob_X_train:
+        :param prob_X_test:
+        :param prob_y_train:
+        :param prob_y_test:
+        :return:
+        """
+
+        iteration_X_train = prob_X_train
+        iteration_X_test = prob_X_test
+
+        iteration_y_train = prob_y_train[:]
+        iteration_y_test = prob_y_test[:]
+
+        for i in range(0, LINE3_CHOOSING_SAMPLES_ITERATION_COUNT+1):
+
+            samples_X, samples_y, indexes = self._choose_ale_samples_closest_to_decision_boundary(iteration_X_train,
+                                                                                                  iteration_X_test,
+                                                                                                  iteration_y_train,
+                                                                                                  iteration_y_test,
+                                                                                                  LINE3_CHOOSING_SAMPLES_SIZE)
+
+            dense_X_train = iteration_X_train.toarray().tolist()
+            dense_X_train += samples_X.toarray().tolist()
+            iteration_X_train = sparse.csr_matrix(dense_X_train)
+
+            iteration_y_train += samples_y.tolist()
+
+            iteration_y_test = np.delete(iteration_y_test, indexes)
+            dense_X_test = iteration_X_test.toarray().tolist()
+            dense_X_test = np.delete(dense_X_test, indexes, axis=0)
+
+
+            iteration_X_test = sparse.csr_matrix(dense_X_test, shape=(len(iteration_y_test), iteration_X_train.shape[1]))
+
+        return iteration_X_train, iteration_X_test, iteration_y_train, iteration_y_test
 
     def _choose_ale_samples_from_cluster_centroids_with_original_features(self, prob_X_test, prob_y_test):
         """
@@ -626,7 +687,6 @@ class ExperimentManager:
         samples_closest_to_centroids_y = prob_y_test[indices_of_closest_samples_to_centroids]
 
         return samples_closest_to_centroids_X, samples_closest_to_centroids_y, indices_of_closest_samples_to_centroids
-
 
     def _combine_train_sets_and_run_classification(self, base_train_X, base_test_X, new_train_X, base_train_y, base_test_y, new_train_y):
         """
