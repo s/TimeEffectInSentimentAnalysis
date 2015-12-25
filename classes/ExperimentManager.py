@@ -160,13 +160,14 @@ class ExperimentManager:
             else:
                 start_index = 0
                 end_index = year_X_data.shape[0]
+                int_300_key = int(ALE_PARTITION_300_KEY[0:3])
 
-                splitted_X[year_X][ALE_PARTITION_300_KEY] = year_X_data[start_index:start_index+800]
-                splitted_X[year_X][ALE_PARTITION_200_KEY] = year_X_data[start_index+800:end_index]
+                splitted_X[year_X][ALE_PARTITION_300_KEY] = year_X_data[start_index:start_index+int_300_key]
+                splitted_X[year_X][ALE_PARTITION_200_KEY] = year_X_data[start_index+int_300_key:end_index]
                 splitted_X[year_X][ALE_PARTITION_50_KEY]  = []
 
-                splitted_y[year_y][ALE_PARTITION_300_KEY] = year_y_data[start_index:start_index+800]
-                splitted_y[year_y][ALE_PARTITION_200_KEY] = year_y_data[start_index+800:end_index]
+                splitted_y[year_y][ALE_PARTITION_300_KEY] = year_y_data[start_index:start_index+int_300_key]
+                splitted_y[year_y][ALE_PARTITION_200_KEY] = year_y_data[start_index+int_300_key:end_index]
                 splitted_y[year_y][ALE_PARTITION_50_KEY]  = []
 
         for test_year in TEST_YEARS:
