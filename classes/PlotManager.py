@@ -123,7 +123,7 @@ class PlotManager:
         plt.xticks(indexes + bar_width*2, xticks)
 
         handles = []
-        for idx, (year, color) in enumerate(zip(self.__years, years_colors)):
+        for idx, (year, color) in enumerate(zip(self.__years, self.__colors)):
             patch = Patch(color=color, label=year)
             handles.append(patch)
 
@@ -182,9 +182,10 @@ class PlotManager:
         legend_line_names = {
             'line1':'LINE1',
             'line2':'LINE2',
-            'line3L0':'LINE3-RF DB',
+            'line3L0':'LINE3-MultinomialNB DB',
             'line3L1':'LINE3-kMEANS CLUSTERING',
             'line3L2':'LINE3-kMEANS CLUSTERING(probabilities)',
+            'line3L3':'LINE3-MultinomialNB DB Iterative Approach',
             'line4':'LINE4'
         }
         # -(2012-500)/(YEAR-300)
@@ -252,7 +253,7 @@ class PlotManager:
         ax.set_xticklabels(["","13","","14","","15"])
         plt.xlabel('Years')
         plt.ylabel('Scores %')
-        plt.title('Scores by year with changing training sets. Classifier=RF Feature=Word.')
+        plt.title('Scores by year with changing training sets. Classifier=SVM Feature=Word.')
         plt.tight_layout()
         plt.grid()
         plt.show()

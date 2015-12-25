@@ -154,20 +154,20 @@ class ExperimentManager:
             splitted_y[year_y] = {}
 
             if not year_X in TEST_YEARS and not year_y in TEST_YEARS:
-                splitted_X[year_X]['500'] = year_X_data
-                splitted_y[year_y]['500'] = year_y_data
+                splitted_X[year_X][ALE_PARTITION_500_KEY] = year_X_data
+                splitted_y[year_y][ALE_PARTITION_500_KEY] = year_y_data
 
             else:
                 start_index = 0
                 end_index = year_X_data.shape[0]
 
-                splitted_X[year_X]['300'] = year_X_data[start_index:start_index+300]
-                splitted_X[year_X]['200'] = year_X_data[start_index+300:end_index]
-                splitted_X[year_X]['50']  = []
+                splitted_X[year_X][ALE_PARTITION_300_KEY] = year_X_data[start_index:start_index+800]
+                splitted_X[year_X][ALE_PARTITION_200_KEY] = year_X_data[start_index+800:end_index]
+                splitted_X[year_X][ALE_PARTITION_50_KEY]  = []
 
-                splitted_y[year_y]['300'] = year_y_data[start_index:start_index+300]
-                splitted_y[year_y]['200'] = year_y_data[start_index+300:end_index]
-                splitted_y[year_y]['50']  = []
+                splitted_y[year_y][ALE_PARTITION_300_KEY] = year_y_data[start_index:start_index+800]
+                splitted_y[year_y][ALE_PARTITION_200_KEY] = year_y_data[start_index+800:end_index]
+                splitted_y[year_y][ALE_PARTITION_50_KEY]  = []
 
         for test_year in TEST_YEARS:
 
@@ -175,16 +175,16 @@ class ExperimentManager:
                 random_X_set = []
                 random_y_set = []
 
-                test_year_200_length = splitted_X[test_year]['200'].shape[0]
+                test_year_200_length = splitted_X[test_year][ALE_PARTITION_200_KEY].shape[0]
                 random.seed()
                 random_start_index = randint(0, test_year_200_length-RANDOM_SAMPLE_SIZE)
                 random_end_index = random_start_index+RANDOM_SAMPLE_SIZE
 
-                random_X_set = splitted_X[test_year]['200'][random_start_index:random_end_index]
-                random_y_set = splitted_y[test_year]['200'][random_start_index:random_end_index]
+                random_X_set = splitted_X[test_year][ALE_PARTITION_200_KEY][random_start_index:random_end_index]
+                random_y_set = splitted_y[test_year][ALE_PARTITION_200_KEY][random_start_index:random_end_index]
 
-                splitted_X[test_year]['50'].append(random_X_set)
-                splitted_y[test_year]['50'].append(random_y_set)
+                splitted_X[test_year][ALE_PARTITION_50_KEY].append(random_X_set)
+                splitted_y[test_year][ALE_PARTITION_50_KEY].append(random_y_set)
 
         return splitted_X, splitted_y
 
@@ -459,12 +459,12 @@ class ExperimentManager:
         Returns new classifier instance
         :return: OneVsRestClassifier
         """
-        #model_for_classification = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
-        #model_for_classification = OneVsRestClassifier(model_for_classification)
+        model_for_classification = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
+        model_for_classification = OneVsRestClassifier(model_for_classification)
         #model_for_classification = RandomForestClassifier(n_estimators=100)
         #model_for_classification = GradientBoostingClassifier(n_estimators=100)
         #model_for_classification = GaussianNB()
-        model_for_classification = xgb.XGBClassifier(n_estimators=100)
+        #model_for_classification = xgb.XGBClassifier(n_estimators=100)
 
         return model_for_classification
 
@@ -473,12 +473,12 @@ class ExperimentManager:
         Returns new classifier instance for logical selection
         :return:
         """
-        #model_for_logical_selection_with_classification = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
-        #model_for_logical_selection_with_classification = OneVsRestClassifier(model_for_logical_selection_with_classification)
+        model_for_logical_selection_with_classification = SVC(C=1.0, kernel='poly', probability=True, degree=1.0, cache_size=250007)
+        model_for_logical_selection_with_classification = OneVsRestClassifier(model_for_logical_selection_with_classification)
         #model_for_logical_selection_with_classification = RandomForestClassifier(n_estimators=100)
         #model_for_logical_selection_with_classification = GradientBoostingClassifier(n_estimators=100)
         #model_for_logical_selection_with_classification = MultinomialNB()
-        model_for_logical_selection_with_classification = xgb.XGBClassifier(n_estimators=100)
+        #model_for_logical_selection_with_classification = xgb.XGBClassifier(n_estimators=100)
 
         return model_for_logical_selection_with_classification
 
@@ -594,7 +594,7 @@ class ExperimentManager:
         :param prob_y_test: list
         :return: scipy.sparse, list, list
         """
-        # Find probabilities
+
         probabilities = self._predict_probabilities(prob_X_train, prob_X_test, prob_y_train)
 
         # Find closest samples to the decision boundary
@@ -621,7 +621,7 @@ class ExperimentManager:
         iteration_y_train = prob_y_train[:]
         iteration_y_test = prob_y_test[:]
 
-        for i in range(0, LINE3_CHOOSING_SAMPLES_ITERATION_COUNT+1):
+        for i in range(0, LINE3_CHOOSING_SAMPLES_ITERATION_COUNT):
 
             samples_X, samples_y, indexes = self._choose_ale_samples_closest_to_decision_boundary(iteration_X_train,
                                                                                                   iteration_X_test,

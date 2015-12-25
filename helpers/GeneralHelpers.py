@@ -441,7 +441,7 @@ class GeneralHelpers:
         :param line3_key: string
         :return: string
         """
-        regexp_for_target_keys = "(L\d{1}-|\+(2012|2013|2014|2015)_50)"
+        regexp_for_target_keys = "(L\d{1}-|\+(2012|2013|2014|2015)_"+ALE_PARTITION_50_KEY+")"
         target_line1_key = re.sub(regexp_for_target_keys, "", line3_key)
         return target_line1_key
 
