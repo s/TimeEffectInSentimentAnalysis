@@ -57,7 +57,7 @@ class DBManager:
         if not 'ALL' == year:
             tweets = self.session.query(model).filter(
                 year == extract('year', model.created_at)).order_by(
-                model.created_at).limit(1600).all()
+                model.created_at).limit(ALE_EACH_YEAR_TWEET_LIMIT_COUNT).all()
         else:
             tweets = self.session.query(model).order_by(model.created_at).all()
 
