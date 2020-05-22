@@ -1,12 +1,12 @@
-#Time Effect In Sentiment Analysis
-This project is developed by [@meryem](http://github.com/meryem) and [@s](http://github.com/s) as a Bachelor Thesis in [Computer Engineering Department of YTU](http://ce.yildiz.edu.tr) with mentorship of [Assistant Prof. Dr. M. Fatih AMASYALI](https://scholar.google.com.tr/citations?user=qTUSAy0AAAAJ&hl=tr&oi=sra).
+# Time Effect In Sentiment Analysis
+This project is developed by [@meryem](http://github.com/meryem) and [@s](http://github.com/s) as a Bachelor Thesis in [Computer Engineering Department of YTU](http://ce.yildiz.edu.tr) with mentorship of [Assistant Prof. Dr. M. Fatih AMASYALI](https://scholar.google.com.tr/citations?user=qTUSAy0AAAAJ&hl=tr&oi=sra). The paper concerning this project can be found here: https://ieeexplore.ieee.org/document/7495714
 
-##About
+## About
 Project started on September 14 and written in mostly in Python but some little part of the system is written in Java and included in the project as .jar files.
 
 To run the project a tweet data collected from Twitter which are about the Turkish companies Turkcell and TTNet. This tweet data has 4000 tweets which are about these two companies and their products. Tweets are collected from 2012, 2013, 2014 and 2015 to have a diversified data to investigate time effect.
 
-##Problem
+## Problem
 In Sentiment Analysis, time can play a negative role which causes decrease in accuracy scores of a Machine Learning system. As time passes, some new phrases can emerge and some can disappear from the vocabulary. To eliminate this effect of time Active Learning techniques used in the project.
 
 Active Learning is a subfield of Machine Learning which tries to perform better with less train examples. To enable this, the algorithm is allowed to choose the data. In our setup three different strategies followed which are:
@@ -17,7 +17,7 @@ Active Learning is a subfield of Machine Learning which tries to perform better 
  
  Normally, if a human collects and labels new data each year, probably the system will perform smoothly. Because of cost of this procedure it is not feasible to collect 200 tweets each year and label them manually. Instead we choose 50 samples from vocabulary which are hard for the model to predict correctly.
  
-##Architecture
+## Architecture
 Project has seven modules which can be listed as follows:
 
 - Import Manager
@@ -135,15 +135,13 @@ Lines 1 and 6 are the worst and best cases. Line 2 demonstrates the case is if e
 
 In this result dictionary, keys starts with L0, L1 and L2 in 'line3' key of the dictionary becomes our Active Learning Experiments' results. Then Plot Manager plots the produced output using [matplotlib](http://matplotlib.org).
 
-##Models
+## Models
 In our setup, in different phases of the project, `SVM`, `RandomForests`, `Naive Bayes`, `kNN`, `J48 Decision Tree` and `k-Means` classifiers are used.
 
-##Result
+## Result
 As a result of this project, we've seen that time effect in sentiment analysis can be eliminated with Active Learning methodologies. As you can see plot below, with 50 actively queried samples our system can perform approximately same with 200 manually labeled case which can be used to reduce the costs. Below you can see a result plotting for `TTNet` dataset.
 
 <img src="./figure.png" width="750" />
 
-##To-do
-The article we wrote will be added to the repository.
-##More
+## More
 To get more information about the project you can send an e-mail to [said](mailto:said@ozcan.co) or [meryem](mailto:meryemmelekekinci@gmail.com).
